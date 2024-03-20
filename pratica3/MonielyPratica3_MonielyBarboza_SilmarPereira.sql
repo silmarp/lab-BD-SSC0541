@@ -1,12 +1,12 @@
 /*
-SCC0541 - LaboratÛrio de Base de Dados
-Pr·tica 03 - SQL/DDL-DML
+SCC0541 - Laborat√≥rio de Base de Dados
+Pr√°tica 03 - SQL/DDL-DML
 Moniely Silva Barboza - 12563800
 Silmar Pereira da Silva Junior - 12623950
 */
 
-/*1) Remova todas as tabelas e re-crie a base de dados. Coloque no script de entrega da Pr·tica 3 os
-comandos para remoÁ„o (drop) e criaÁ„o (create) das tabelas.
+/*1) Remova todas as tabelas e re-crie a base de dados. Coloque no script de entrega da Pr√°tica 3 os
+comandos para remo√ß√£o (drop) e cria√ß√£o (create) das tabelas.
 */
 
 DROP TABLE PARTICIPA;
@@ -69,7 +69,7 @@ CREATE TABLE ORBITA_ESTRELA (
         CONSTRAINT FK_ORBITA_ESTRELA_ORBITADA FOREIGN KEY (ORBITADA)
             REFERENCES ESTRELA(ID_CATALOGO)
             ON DELETE CASCADE 
-            /*n„o h· orbita se n„o houver orbitante E orbitado*/
+            /*n√£o h√° orbita se n√£o houver orbitante E orbitado*/
 );
 
 CREATE TABLE ORBITA_PLANETA (
@@ -98,7 +98,7 @@ CREATE TABLE ESPECIE (
             ON DELETE CASCADE
 );
 
-/* Se uma Comunidade est· sendo criada, deve existir pelo menos 1 Habitante */
+/* Se uma Comunidade est√° sendo criada, deve existir pelo menos 1 Habitante */
 CREATE TABLE COMUNIDADE (
     ESPECIE VARCHAR(50) NOT NULL,
     NOME VARCHAR(50) NOT NULL,
@@ -130,7 +130,7 @@ CREATE TABLE FEDERACAO (
         CONSTRAINT PK_FEDERACAO PRIMARY KEY (NOME_FD)
 );
 
-/* Se uma NaÁ„o est· sendo criada, ela deve existir em pelo menos 1 Planeta */
+/* Se uma Na√ß√£o est√° sendo criada, ela deve existir em pelo menos 1 Planeta */
 CREATE TABLE NACAO (
     NOME_NC VARCHAR(50) NOT NULL,
     QTD_PLANETAS INT DEFAULT 1,
@@ -171,7 +171,7 @@ CREATE TABLE LIDER (
             ON DELETE CASCADE
 );
 
-/* Se uma FaccÁ„o est· sendo criada, ela deve existir em pelo menos 1 NaÁ„o */
+/* Se uma Facc√ß√£o est√° sendo criada, ela deve existir em pelo menos 1 Na√ß√£o */
 CREATE TABLE FACCAO(
     NOME_FC VARCHAR(50) NOT NULL,
     LIDER_FC VARCHAR(50) NOT NULL,
@@ -213,8 +213,8 @@ CREATE TABLE PARTICIPA (
 
 
 /*
-2) Re-insira os dados (podem ser os mesmos inserts realizados no inÌcio da Pr·tica 2). Coloque no script
-de entrega da Pr·tica 3 os comandos para inserÁ„o dos dados.
+2) Re-insira os dados (podem ser os mesmos inserts realizados no in√≠cio da Pr√°tica 2). Coloque no script
+de entrega da Pr√°tica 3 os comandos para inser√ß√£o dos dados.
 */
 /* Massa das estrelas em massas solares */
 /* Massa dos planetas relativo a terra */
@@ -344,7 +344,7 @@ INSERT INTO HABITACAO
 
 INSERT INTO HABITACAO
 	VALUES(
-		'Skaro', 'Kaleds Extermum', 'Restos de Skaro', /*pÛs guerra civil dalek*/
+		'Skaro', 'Kaleds Extermum', 'Restos de Skaro', /*p√≥s guerra civil dalek*/
 		TO_DATE('15/12/3050', 'dd/mm/yyyy'),
 		NULL
 	);
@@ -472,15 +472,15 @@ INSERT INTO PARTICIPA
 	);
 
 /*
-3) Para as consultas a seguir, elabore casos de teste e insira os dados necess·rios para testar os casos.
-A eficiÍncia da consulta ser· considerada na correÁ„o. Coloque no script de entrega da Pr·tica 3: os
-comandos de inserÁ„o dos dados de teste de cada consulta, o comando da consulta e os
-coment·rios que julgar relevantes para a correÁ„o. */
+3) Para as consultas a seguir, elabore casos de teste e insira os dados necess√°rios para testar os casos.
+A efici√™ncia da consulta ser√° considerada na corre√ß√£o. Coloque no script de entrega da Pr√°tica 3: os
+comandos de inser√ß√£o dos dados de teste de cada consulta, o comando da consulta e os
+coment√°rios que julgar relevantes para a corre√ß√£o. */
 
-/* a. Selecione, para cada facÁ„o, seu nome, ideologia, nome do lÌder, espÈcie do lÌder e naÁ„o do
-lÌder. */
+/* a. Selecione, para cada fac√ß√£o, seu nome, ideologia, nome do l√≠der, esp√©cie do l√≠der e na√ß√£o do
+l√≠der. */
 
--- Teste: InserÁ„o de um lÌder que n„o lidera nenhuma facÁ„o
+-- Teste: Inser√ß√£o de um l√≠der que n√£o lidera nenhuma fac√ß√£o
 INSERT INTO LIDER
 VALUES ('111.222.333-44', 'Rassilon', 'Comandante', 'Gallifrey', 'Homo Tempus');
 
@@ -489,10 +489,10 @@ FROM FACCAO F, LIDER L
 WHERE F.LIDER_FC = L.CPI;
 
 
-/* b. Selecione, para cada lÌder da sociedade gal·ctica, seu CPI, seu nome, naÁ„o a que pertence,
-sua espÈcie e o planeta de origem dela, e se o lÌder for respons·vel por liderar alguma facÁ„o,
-selecione tambÈm o nome da facÁ„o. */
-/* TODO: inserir testes para quando o lider n„o lidera faccao */
+/* b. Selecione, para cada l√≠der da sociedade gal√°ctica, seu CPI, seu nome, na√ß√£o a que pertence,
+sua esp√©cie e o planeta de origem dela, e se o l√≠der for respons√°vel por liderar alguma fac√ß√£o,
+selecione tamb√©m o nome da fac√ß√£o. */
+/* TODO: inserir testes para quando o lider n√£o lidera faccao */
 
 SELECT L.CPI, L.NOME, L.NACAO, L.ESPECIE, E.PLANETA_ORIGEM AS ESPECIE_ORIGEM, F.NOME_FC AS FACCAO
 FROM LIDER L JOIN ESPECIE E
@@ -501,10 +501,10 @@ ON L.ESPECIE = E.NOME_CIENTIFICO
     ON L.CPI = F.LIDER_FC;
 
 
-/* c. Para cada estrela orbitada por outra(s), selecione seu nome e sua classificaÁ„o, e o nome e a
-classificaÁ„o da(s) estrela(s) que a orbita(m). */
+/* c. Para cada estrela orbitada por outra(s), selecione seu nome e sua classifica√ß√£o, e o nome e a
+classifica√ß√£o da(s) estrela(s) que a orbita(m). */
 
--- Teste: Estrela orbitada por m˙ltiplas estrelas
+-- Teste: Estrela orbitada por m√∫ltiplas estrelas
 INSERT INTO ESTRELA 
     VALUES ('ALF CMa C','SIRIUS C', 'ana branca', 11.018, 16, -58, 42);
     
@@ -519,14 +519,14 @@ WHERE OE.ORBITADA = E1.ID_CATALOGO AND OE.ORBITANTE = E2.ID_CATALOGO;
 
 
 /* d. Para cada planeta habitado momento atual, selecione a quantidade de comunidades com
-espÈcies inteligentes que possuem atualmente (ou seja, a consulta n„o considera habitaÁıes
-do passado). Lembre-se de considerar que um planeta habitado no momento atual pode n„o
-ter espÈcies inteligentes, mas precisa aparecer na resposta com contagem zero. */
+esp√©cies inteligentes que possuem atualmente (ou seja, a consulta n√£o considera habita√ß√µes
+do passado). Lembre-se de considerar que um planeta habitado no momento atual pode n√£o
+ter esp√©cies inteligentes, mas precisa aparecer na resposta com contagem zero. */
 
 --Testes:
--- Planeta habitado sem espÈcies inteligentes: Mercurio - Cogumelo
--- Planeta habitado com comunidades do passado de especies inteligentes (que n„o devem ser contadas): Terra - Dinossauro 
--- Planeta n„o habitado: Venus
+-- Planeta habitado sem esp√©cies inteligentes: Mercurio - Cogumelo
+-- Planeta habitado com comunidades do passado de especies inteligentes (que n√£o devem ser contadas): Terra - Dinossauro 
+-- Planeta n√£o habitado: Venus
 
 
 INSERT INTO PLANETA (DESIGNACAO_ASTRONOMICA) VALUES ('Mercurio');  
@@ -557,7 +557,7 @@ WHERE DT_FIM IS NULL OR DT_FIM > TO_DATE(SYSDATE, 'dd/mm/yyyy')
 GROUP BY H.PLANETA;
 
 /* e. Para cada planeta habitado, selecione a quantidade de comunidades existentes para cada
-uma das espÈcies que o habitam. */
+uma das esp√©cies que o habitam. */
 
 -- Testes: Planeta com mais de 1 especie
 INSERT INTO HABITACAO (PLANETA, COM_ESPECIE, COM_NOME, DT_INICIO)
@@ -572,14 +572,14 @@ WHERE DT_FIM IS NULL OR DT_FIM > TO_DATE(SYSDATE, 'dd/mm/yyyy')
 GROUP BY H.PLANETA, E.NOME_CIENTIFICO;
 
 /* f. Escolha na sua base de dados 1 estrela orbitada por pelo menos 2 planetas. Selecione nome
-e classificaÁ„o das estrelas que s„o orbitadas por todos os planetas que orbitam a estrela
+e classifica√ß√£o das estrelas que s√£o orbitadas por todos os planetas que orbitam a estrela
 escolhida. */
 
--- Testes: InserÁ„o de 1 estrela orbitada por pelo menos 2 planetas
+-- Testes: Inser√ß√£o de 1 estrela orbitada por pelo menos 2 planetas
 INSERT INTO ORBITA_PLANETA VALUES ('Gallifrey', 'ALF CMa C', 278.447, 305.772, 675.354);
 INSERT INTO ORBITA_PLANETA VALUES ('Skaro', 'ALF CMa C', 278.447, 305.772, 675.354);
 
--- Testes: InserÁ„o de 2 estrelas orbitadas pelos mesmos planetas da estrela acima
+-- Testes: Inser√ß√£o de 2 estrelas orbitadas pelos mesmos planetas da estrela acima
 INSERT INTO ORBITA_PLANETA VALUES ('Gallifrey', 'ALF CMa', 278.447, 305.772, 675.354);
 INSERT INTO ORBITA_PLANETA VALUES ('Skaro', 'ALF CMa', 278.447, 305.772, 675.354);
 
@@ -587,16 +587,16 @@ INSERT INTO ORBITA_PLANETA VALUES ('Gallifrey', 'ALF CMa B', 278.447, 305.772, 6
 INSERT INTO ORBITA_PLANETA VALUES ('Skaro', 'ALF CMa B', 278.447, 305.772, 675.354);
 
 
-SELECT E.NOME, E.CLASSIFICACAO
-FROM ESTRELA E
-WHERE NOT EXISTS (
-    (   SELECT OP1.PLANETA
-        FROM ORBITA_PLANETA OP1
-        WHERE OP1.ESTRELA = 'ALF CMa C'
+SELECT DISTINCT E.NOME, E.CLASSIFICACAO
+FROM ESTRELA E, PLANETA P
+WHERE NOT EXISTS  (
+    (   SELECT OP.PLANETA
+        FROM ORBITA_PLANETA OP
+        WHERE OP.ESTRELA = 'ALF CMa C'
     )
     MINUS
-    (   SELECT OP2.ESTRELA, OP2.PLANETA
-        FROM ORBITA_PLANETA OP2
-        WHERE OP2.PLANETA = OP1.PLANETA 
-    )
-);
+    (   SELECT OP.PLANETA
+        FROM ORBITA_PLANETA OP
+        WHERE OP.ESTRELA = E.ID_CATALOGO)
+	)
+    AND E.ID_CATALOGO != 'ALF CMa C';

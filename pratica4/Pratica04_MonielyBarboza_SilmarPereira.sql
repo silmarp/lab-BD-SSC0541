@@ -660,6 +660,60 @@ antes e depois do índice e explique porque sua solução funciona (qual foi sua li
 select classificacao, count(*) from estrela
 group by classificacao; */
 
+-- Consulta --
+select classificacao, count(*) from estrela
+group by classificacao;
+
+explain plan set statement_id = 'teste1' for
+    select classificacao, count(*) from estrela
+	group by classificacao;
+SELECT plan_table_output
+FROM TABLE(dbms_xplan.display());
+
+/*
+Resultados antes da criação do indice:
+
+------------------------------------------------------------------------------
+| Id  | Operation          | Name    | Rows  | Bytes | Cost (%CPU)| Time     |
+------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT   |         |  1235 |  6175 |    16   (7)| 00:00:01 |
+|   1 |  HASH GROUP BY     |         |  1235 |  6175 |    16   (7)| 00:00:01 |
+|   2 |   TABLE ACCESS FULL| ESTRELA |  6586 | 32930 |    15   (0)| 00:00:01 |
+------------------------------------------------------------------------------
+*/
+
+-- Criação do indice --
+
+CREATE index idx_classificacao_id
+    on estrela(classificacao, id_estrela);
+
+drop index idx_classificacao_id;
+
+/*
+Resultados após a criação do indice:
+
+-------------------------------------------------------------------------------------------
+| Id  | Operation             | Name              | Rows  | Bytes | Cost (%CPU)| Time     |
+-------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT      |                   |  1235 |  6175 |     9  (12)| 00:00:01 |
+|   1 |  HASH GROUP BY        |                   |  1235 |  6175 |     9  (12)| 00:00:01 |
+|   2 |   INDEX FAST FULL SCAN| IDX_CLASSIFICACAO |  6586 | 32930 |     8   (0)| 00:00:01 |
+-------------------------------------------------------------------------------------------
+
+Com relação ao porque essa solução funciona, a consulta em questão exige apenas um
+atributo (classificação) e lerá todas as tuplas pois ira contar todas após serem agrupadas.
+Assim, a melhor opção para melhorar o desempenho com o uso de indice será um Fast Full Index Scan
+com a classificação da estrela indexada.
+
+Entretanto se indexarmos apenas a classificação, o Fast Full Index Scan não irá ocorrer pois
+o atriburo indexado pode ser NULL, e ter ao menos um atributo NOT NULL é uma exigencia desse tipo
+de scan, para resolver tal problema basta indexar junto a classificação um atributo que cumpra o
+requisito, no caso o que está sendo usado o ID_ESTRELA.
+
+Assim, com o uso do indice ao inves de um table access temos como resultado uma diminuição no custo
+de aproximadamente 44%, mesmo que haja uma maior ultilização da CPU
+*/
+
 /* 8) Pesquise sobre bitmap join index. Elabore uma consulta com junção que possa se beneficiar desse
 tipo de índice e explique o porquê. Crie o índice e analise os planos de consulta antes e depois.
 OBS: se for usar alguma tabela que está vazia, faça as devidas inserções para teste. */

@@ -1,38 +1,34 @@
 /*
-SCC0541 - Laborat√≥rio de Base de Dados
-Pr√°tica 03 - SQL/DDL-DML
+SCC0541 - LaboratÛrio de Base de Dados
+Pr·tica 04 - Õndices
 Moniely Silva Barboza - 12563800
 Silmar Pereira da Silva Junior - 12623950
 */
 
-/*
-1) Preparando a base de dados....
-a) remova todas as tabelas criadas na Pr√°tica 3
-√ò Dica: usando o comando abaixo, crie um script de remo√ß√£o para todas as suas tabelas - o script
-ser√° o resultado da consulta
+/* 1) Preparando a base de dados....
+a) remova todas as tabelas criadas na Pr·tica 3
+ÿ Dica: usando o comando abaixo, crie um script de remoÁ„o para todas as suas tabelas - o script
+ser· o resultado da consulta
 select 'drop table '||table_name||' cascade constraints;' from user_tables;
-( || √© um operador de concatena√ß√£o de string )
-b) crie novas tabelas executando o script esquema.sql (dispon√≠vel no Tidia)
-c) alimente a base com o script dados_novo.sql (dispon√≠vel no Tidia)
-d) como o seu esquema acabou de ser criado, ainda n√£o h√° estat√≠sticas coletadas para ele.
-Portanto, qualquer plano de consulta ser√° gerado sem o uso de estat√≠sticas, considerando
-apenas regras do otimizador e avalia√ß√µes de custo. Execute o comando abaixo para
-coletar as estat√≠sticas que ajudam na otimiza√ß√£o das consultas. Se o comando n√£o for
-executado explicitamente, as estat√≠sticas s√£o geradas automaticamente durante a noite
-(quando o Oracle est√° configurado para isso).
-EXEC DBMS_STATS.GATHER_SCHEMA_STATS(NULL, NULL);
-*/
+( || È um operador de concatenaÁ„o de string )
+b) crie novas tabelas executando o script esquema.sql (disponÌvel no Tidia)
+c) alimente a base com o script dados_novo.sql (disponÌvel no Tidia)
+d) como o seu esquema acabou de ser criado, ainda n„o h· estatÌsticas coletadas para ele.
+Portanto, qualquer plano de consulta ser· gerado sem o uso de estatÌsticas, considerando
+apenas regras do otimizador e avaliaÁıes de custo. Execute o comando abaixo para
+coletar as estatÌsticas que ajudam na otimizaÁ„o das consultas. Se o comando n„o for
+executado explicitamente, as estatÌsticas s„o geradas automaticamente durante a noite
+(quando o Oracle est· configurado para isso).
+EXEC DBMS_STATS.GATHER_SCHEMA_STATS(NULL, NULL); */
 
 EXEC DBMS_STATS.GATHER_SCHEMA_STATS(NULL, NULL);
 
-/*
-2) Considere as consultas abaixo:
+/* 2) Considere as consultas abaixo:
 select * from planeta
 where classificacao = 'Dolores autem maxime fuga.';
 select * from planeta where classificacao = 'Confirmed';
-a) Execute as consultas, e depois analise os planos de execu√ß√£o gerados pelo otimizador para essas
-consultas.
-*/
+a) Execute as consultas, e depois analise os planos de execuÁ„o gerados pelo otimizador para essas
+consultas. */
 
 select * from planeta
     where classificacao = 'Dolores autem maxime fuga.';
@@ -88,33 +84,30 @@ Plan hash value: 2930980072
 Predicate Information (identified by operation id):
 ---------------------------------------------------
  
-   1 - filter("CLASSIFICACAO"='Confirmed')
+   1 - filter("CLASSIFICACAO"='Confirmed') */ 
    
-   
-Como em ambas as consultas √© solicitada a mesma informa√ß√£o (planetas com uma determinada classifica√ß√£o) e n√£o h√° index para o atributo buscado, o processo realizado √© o mesmo: percorrer toda tabela seleciionando as tuplas que satisfazem a condi√ß√£o solicitada
-*/
+/*  Como em ambas as consultas È solicitada a mesma informaÁ„o (planetas com uma determinada classificaÁ„o) e n„o h· index para o atributo buscado, o processo realizado È o mesmo: percorrer toda tabela seleciionando as tuplas que satisfazem a condiÁ„o solicitada */
 
 
-/*
-b) Crie um √≠ndice que possa melhorar a performance dessas consultas. Explique o porqu√™ da
-escolha do tipo de √≠ndice criado.
-*/
+/* b) Crie um Ìndice que possa melhorar a performance dessas consultas. Explique o porquÍ da
+escolha do tipo de Ìndice criado. */
 
 create index idx_classificacao
 on planeta (classificacao);
 
 drop index idx_classificacao;
 
--- TODO: explicar o pq da escolha desse tipo de indice
+/*  Utilizou-se o Ìndice B-tree, que È mais simples e comum.
+A cardinalidade do atributo classificaÁ„o È muito alta, n„o sendo vi·vel o uso de um bitmap index.
+AlÈm disso, n„o h· a computaÁ„o de uma funÁ„o ou express„o, n„o fazendo sentido o uso de um Function-Based Index.
+Por se tratar de consultas simples, n„o h· a necessidade de utilizar um Application Domain Index
+Por esses motivos, optamos pelo B-Tree index */
 
+/*  c) Execute novamente as consultas e analise os planos de execuÁ„o. Inclua os plano no script da
+pr·tica. Explique as principais diferenÁas em relaÁ„o aos planos gerados antes da criaÁ„o do
+Ìndice. */
 
-/*
-c) Execute novamente as consultas e analise os planos de execu√ß√£o. Inclua os plano no script da
-pr√°tica. Explique as principais diferen√ßas em rela√ß√£o aos planos gerados antes da cria√ß√£o do
-√≠ndice.
-*/
-
-/*  Resultados ap√≥s a cria√ß√£o do √≠ndice:
+/*  Resultados apÛs a criaÁ„o do Ìndice:
 Plano de Consulta: Consulta 01
 
 Plan hash value: 1267387943
@@ -147,21 +140,18 @@ Plan hash value: 2930980072
 Predicate Information (identified by operation id):
 ---------------------------------------------------
  
-   1 - filter("CLASSIFICACAO"='Confirmed')
+   1 - filter("CLASSIFICACAO"='Confirmed') */
         
     
-Ap√≥s a cria√ß√£o do √≠ndice, na primeira consulta o custo foi bem menor devido ao fato de ser 1 acesso √† 1 tupla da tabela. Por isso, a opera√ß√£o realizada foi o acesso por √≠ndice.
-Em contrapartida, na segunda consulta v√°rias tuplas s√£o acessadas, sendo assim, mesmo com a cria√ß√£o do √≠ndice, ele n√£o √© utilizado e o resultado permanece o mesmo de antes, pois o otimizador continua realizando a busca sequencial.
-*/
+/*  ApÛs a criaÁ„o do Ìndice, na primeira consulta o custo foi bem menor devido ao fato de ser 1 acesso ‡ 1 tupla da tabela. Por isso, a operaÁ„o realizada foi o acesso por Ìndice.
+Em contrapartida, na segunda consulta v·rias tuplas s„o acessadas, sendo assim, mesmo com a criaÁ„o do Ìndice, ele n„o È utilizado e o resultado permanece o mesmo de antes, pois o otimizador continua realizando a busca sequencial. */
 
 
-/*
-3) Considere as consultas abaixo:
+/*  3) Considere as consultas abaixo:
 select * from nacao where nome = 'Minus magni.';
 select * from nacao where upper(nome) = 'MINUS MAGNI.';
-a) Execute as consultas, e depois analise os planos de execu√ß√£o gerados pelo otimizador para essas
-consultas. Explique a principal diferen√ßa entre eles e a raz√£o dessa diferen√ßa
-*/
+a) Execute as consultas, e depois analise os planos de execuÁ„o gerados pelo otimizador para essas
+consultas. Explique a principal diferenÁa entre eles e a raz„o dessa diferenÁa */
 
 select * from nacao where nome = 'Minus magni.';
 select * from nacao where upper(nome) = 'MINUS MAGNI.';
@@ -211,20 +201,16 @@ Plan hash value: 2698598799
 Predicate Information (identified by operation id):
 ---------------------------------------------------
  
-   1 - filter(UPPER("NOME")='MINUS MAGNI.')
+   1 - filter(UPPER("NOME")='MINUS MAGNI.') */
    
-Houve uma diferen√ßa na opera√ß√£o realizada em cada opra√ß√£o e, por consequ√™ncia no custo. Enquanto na consulta 1 ele utiliza o √≠ndice para acessar a tupla, na consulta 2 toda a tebala √© percorrida.
-Ambas as consultas retornam apenas 1 tupla como resultado. Entretanto, como na segunda consulta h√° a fun√ß√£o 'upper', o otimizador entende que pode haver mais de 1 resultado poss√≠vel, pois o atrbuto deixa de ser uma unique, sendo assim, verifica-se toda a tabela.   
-        
-*/
+/*  Houve uma diferenÁa na operaÁ„o realizada em cada opraÁ„o e, por consequÍncia no custo. Enquanto na consulta 1 ele utiliza o Ìndice para acessar a tupla, na consulta 2 toda a tebala È percorrida.
+Ambas as consultas retornam apenas 1 tupla como resultado. Entretanto, como na segunda consulta h· a funÁ„o 'upper', o otimizador entende que pode haver mais de 1 resultado possÌvel, pois o atrbuto deixa de ser uma unique, sendo assim, verifica-se toda a tabela. */
 
 
-/*
-b) Crie um √≠ndice que possa melhorar a performance da segunda consulta. Explique o porqu√™ da
-escolha do tipo de √≠ndice criado.
+/*  b) Crie um Ìndice que possa melhorar a performance da segunda consulta. Explique o porquÍ da
+escolha do tipo de Ìndice criado. */
 
-Como h√° a fun√ß√£o upper na consulta 02, utilizaremos uma Function-Based Index para que o valor da fun√ß√£o seja calculado e utilizado como chave do index.
-*/
+/* Como h· a funÁ„o upper na consulta 02, utilizaremos uma Function-Based Index para que o valor da funÁ„o seja calculado e utilizado como chave do index. */
 
 create index idx_astro
 on nacao (upper(nome));
@@ -232,13 +218,11 @@ on nacao (upper(nome));
 drop index idx_astro;
 
 
-/*
-c) Execute novamente as consultas e analise os planos de execu√ß√£o. Inclua os planos no script da
-pr√°tica. Explique as principais diferen√ßas em rela√ß√£o aos planos gerados antes da cria√ß√£o do
-√≠ndice.
-*/
+/*  c) Execute novamente as consultas e analise os planos de execuÁ„o. Inclua os planos no script da
+pr·tica. Explique as principais diferenÁas em relaÁ„o aos planos gerados antes da criaÁ„o do
+Ìndice. */
 
-/*  Resultado com a cria√ß√£o de um index para a fun√ß√£o upper
+/*  Resultado com a criaÁ„o de um index para a funÁ„o upper
 Plan hash value: 1990771718
  
 -------------------------------------------------------------------------------------------------
@@ -252,16 +236,15 @@ Plan hash value: 1990771718
 Predicate Information (identified by operation id):
 ---------------------------------------------------
  
-   2 - access(UPPER("NOME")='MINUS MAGNI.')
+   2 - access(UPPER("NOME")='MINUS MAGNI.') */
    
-Com a cria√ß√£o do √≠ndice para upper(nome), o otimizador utilizou o √≠ndice ao realizar a busca. Houve uma pequena redu√ß√£o do custo e uso da CPU. Entretanto, a fun√ß√£o upper aplicada no nome ocasiona que o nome deixe de ser considerado como unique. Por esse motivo, o otimizador estima que podem haver muito mais linhas de resultado do que realmente h√° (semanticamente, sabemos que h√° apenas 1 tupla de resultado, pois nome √© primary key da tabela)
-Por isso, criaremos um unique index para upper(nome)
-*/
+/*  Com a criaÁ„o do Ìndice para upper(nome), o otimizador utilizou o Ìndice ao realizar a busca. Houve uma pequena reduÁ„o do custo e uso da CPU. Entretanto, a funÁ„o upper aplicada no nome ocasiona que o nome deixe de ser considerado como unique. Por esse motivo, o otimizador estima que podem haver muito mais linhas de resultado do que realmente h· (semanticamente, sabemos que h· apenas 1 tupla de resultado, pois nome È primary key da tabela)
+Por isso, criaremos um unique index para upper(nome) */
 
 create unique index idx_astro
 on nacao (upper(nome));
 
-/* Resultado com a cria√ß√£o de um index unique para a fun√ß√£o upper
+/* Resultado com a criaÁ„o de um index unique para a funÁ„o upper
 Plan hash value: 1113848651
  
 -----------------------------------------------------------------------------------------
@@ -275,21 +258,17 @@ Plan hash value: 1113848651
 Predicate Information (identified by operation id):
 ---------------------------------------------------
  
-   2 - access(UPPER("NOME")='MINUS MAGNI.')
+   2 - access(UPPER("NOME")='MINUS MAGNI.') */
    
-Com o unique index, ele executa um Unique Index Scan, ou seja, ele acessar√° apenas a tupla resultante e a estimativa fica adequada. Al√©m disso, o custo √© reduzido.
-Apesar de na pr√°tica, nesse caso, n√£o haver diferen√ßa entre a consulta com e sem o unique index, em outras situa√ß√µes isso pode levar ao otimizador escolher realizar uma busca sequencial, pois ele n√£o saberia que nome √© uma unique.
-*/
+/*  Com o unique index, ele executa um Unique Index Scan, ou seja, ele acessar· apenas a tupla resultante e a estimativa fica adequada. AlÈm disso, o custo È reduzido.
+Apesar de na pr·tica, nesse caso, n„o haver diferenÁa entre a consulta com e sem o unique index, em outras situaÁıes isso pode levar ao otimizador escolher realizar uma busca sequencial, pois ele n„o saberia que nome È uma unique. */
 
 
-/*
-
-4) Considere as consultas abaixo:
+/* 4) Considere as consultas abaixo:
 select * from planeta where massa between 0.1 and 10;
 select * from planeta where massa between 0.1 and 3000;
-a) Execute as consultas, e depois analise os planos de execu√ß√£o gerados pelo otimizador para essas
-consultas.
-*/
+a) Execute as consultas, e depois analise os planos de execuÁ„o gerados pelo otimizador para essas
+consultas. */
 
 select * from planeta where massa between 0.1 and 10;
 select * from planeta where massa between 0.1 and 3000;
@@ -321,8 +300,7 @@ Plan hash value: 2930980072
 Predicate Information (identified by operation id):
 ---------------------------------------------------
  
-   1 - filter("MASSA"<=10 AND "MASSA">=0.1)
-*/
+   1 - filter("MASSA"<=10 AND "MASSA">=0.1) */
 
 /*  Resultado: Consulta 02
 
@@ -338,28 +316,21 @@ Plan hash value: 2930980072
 Predicate Information (identified by operation id):
 ---------------------------------------------------
  
-   1 - filter("MASSA"<=3000 AND "MASSA">=0.1)
-*/
+   1 - filter("MASSA"<=3000 AND "MASSA">=0.1) */
 
 
-/*
-b) Crie um √≠ndice que possa melhorar a performance dessas consultas. Explique o porqu√™ da
-escolha do tipo de √≠ndice criado.
-*/
+/*  b) Crie um Ìndice que possa melhorar a performance dessas consultas. Explique o porquÍ da
+escolha do tipo de Ìndice criado. */
 
 create index idx_massa
 on planeta (massa);
 
 drop index idx_massa;
 
+/*  c) Execute novamente as consultas e analise os planos de execuÁ„o. Inclua os planos no script da
+pr·tica. Explique os resultados. */
 
-
-/*
-c) Execute novamente as consultas e analise os planos de execu√ß√£o. Inclua os planos no script da
-pr√°tica. Explique os resultados.
-*/
-
-/*  Resultado com a cria√ß√£o de um index para o atributo massa
+/*  Resultado com a criaÁ„o de um index para o atributo massa
 Resultado: Consulta 01
 Plan hash value: 2930980072
  
@@ -389,19 +360,16 @@ Plan hash value: 2930980072
 Predicate Information (identified by operation id):
 ---------------------------------------------------
  
-   1 - filter("MASSA"<=3000 AND "MASSA">=0.1)
+   1 - filter("MASSA"<=3000 AND "MASSA">=0.1) */
 
-A artir de certo ponto, mesmo existindo um √≠ndice para o atributo massa, torna-se mais eficiente realizar o acesso sequencial do que por √≠ndice, pois o acesso sequencial obt√©m um bloco de dados em um √∫nico acesso ao disco.
-Apesar disso, com a cria√ß√£o do √≠ndice as estimativas de linhas e bytes mudou.
-*/
+/*  A artir de certo ponto, mesmo existindo um Ìndice para o atributo massa, torna-se mais eficiente realizar o acesso sequencial do que por Ìndice, pois o acesso sequencial obtÈm um bloco de dados em um ˙nico acesso ao disco.
+Apesar disso, com a criaÁ„o do Ìndice as estimativas de linhas e bytes mudou. */
 
-/*
-5) Considere as consultas abaixo:
+/*  5) Considere as consultas abaixo:
 select * from especie where inteligente = 'V';
 select * from especie where inteligente = 'F';
-a) Execute as consultas, e depois analise os planos de execu√ß√£o gerados pelo otimizador para essas
-consultas.
-*/
+a) Execute as consultas, e depois analise os planos de execuÁ„o gerados pelo otimizador para essas
+consultas. */
 
 select * from especie where inteligente = 'V';
 select * from especie where inteligente = 'F';
@@ -432,9 +400,10 @@ Plan hash value: 139595281
 Predicate Information (identified by operation id):
 ---------------------------------------------------
  
-   1 - filter("INTELIGENTE"='V')
+   1 - filter("INTELIGENTE"='V') */
+
    
-Resultado: Consulta 02
+/* Resultado: Consulta 02
 Plan hash value: 139595281
  
 -----------------------------------------------------------------------------
@@ -447,13 +416,9 @@ Plan hash value: 139595281
 Predicate Information (identified by operation id):
 ---------------------------------------------------
  
-   1 - filter("INTELIGENTE"='F')
-*/
+   1 - filter("INTELIGENTE"='F') */
 
-
-/*
-b) Crie um √≠ndice bitmap para a tabela de esp√©cies.
-*/
+/* b) Crie um Ìndice bitmap para a tabela de espÈcies. */
 
 create bitmap index idx_inteligente
     on especie(inteligente);
@@ -461,53 +426,32 @@ create bitmap index idx_inteligente
 drop index idx_inteligente;
 
 
-/*
-c) Discuta vantagem(ns) e desvantagem(ns) da cria√ß√£o do √≠ndice. Use os planos de consulta gerados
-ap√≥s a cria√ß√£o do √≠ndice para embasar sua resposta
+/* c) Discuta vantagem(ns) e desvantagem(ns) da criaÁ„o do Ìndice. Use os planos de consulta gerados
+apÛs a criaÁ„o do Ìndice para embasar sua resposta */
 
-A cria√ß√£o de um √≠ndice bitmap possibilita uma mehoria no desempenho das consultas que filtram dados com base em colunas que possuem um n√∫mero limitado de valores distintos, como booleanos ou valores discretos, como no caso da coluna inteligente que tem apenas os valores 'V' e 'F'. Outra vantagem consiste na redu√ß√£o dos acessos ao disco e da sobrecarga da CPU, j√° que √≠ndices bitmap geralmente s√£o mais eficientes em termos de CPU do que outras formas de √≠ndices.
+/* A criaÁ„o de um Ìndice bitmap possibilita uma mehoria no desempenho das consultas que filtram dados com base em colunas que possuem um n˙mero limitado de valores distintos, como booleanos ou valores discretos.
+Outra vantagem consiste na reduÁ„o dos acessos ao disco e da sobrecarga da CPU, j· que Ìndices bitmap geralmente s„o mais eficientes em termos de CPU do que outras formas de Ìndices.
 
-Em contrapartida, √© importante considerar que o √≠ndice bitmap pode consumir mais espa√ßo de armazenamento, especiealmente em tabelas grandes ou colunas com v√°rios valores distintos. Al√©m disso, h√° o custo de overhead de atualiza√ß√£o que ocorrer√° em todas as opera√ß√µes de inser√ß√£o, atualiza√ß√£o e exclus√£o da tabela.
+Em contrapartida, È importante considerar que o Ìndice bitmap pode consumir mais espaÁo de armazenamento, especiealmente em tabelas grandes ou colunas com v·rios valores distintos.
+AlÈm disso, h· o custo de overhead de atualizaÁ„o que ocorrer· em todas as operaÁıes de inserÁ„o, atualizaÁ„o e exclus„o da tabela.
 
-Resultado ap√≥s a cria√ß√£o do √≠ndice: Consulta 01
-Plan hash value: 139595281
- 
------------------------------------------------------------------------------
-| Id  | Operation         | Name    | Rows  | Bytes | Cost (%CPU)| Time     |
------------------------------------------------------------------------------
-|   0 | SELECT STATEMENT  |         | 24940 |   706K|    70   (3)| 00:00:01 |
-|*  1 |  TABLE ACCESS FULL| ESPECIE | 24940 |   706K|    70   (3)| 00:00:01 |
------------------------------------------------------------------------------
- 
-Predicate Information (identified by operation id):
----------------------------------------------------
- 
-   1 - filter("INTELIGENTE"='V')
-   
-Resultado ap√≥s a cria√ß√£o do √≠ndice: Consulta 02
-Plan hash value: 139595281
- 
------------------------------------------------------------------------------
-| Id  | Operation         | Name    | Rows  | Bytes | Cost (%CPU)| Time     |
------------------------------------------------------------------------------
-|   0 | SELECT STATEMENT  |         | 25054 |   709K|    70   (3)| 00:00:01 |
-|*  1 |  TABLE ACCESS FULL| ESPECIE | 25054 |   709K|    70   (3)| 00:00:01 |
------------------------------------------------------------------------------
- 
-Predicate Information (identified by operation id):
----------------------------------------------------
- 
-   1 - filter("INTELIGENTE"='F')
+Para o caso das consultas acima, podemos observar que o n˙mero de tuplas recuperadas em cada uma dessas consultas equivale a aproximadamente metade da quantidade total de tuplas da tabela.
+Sendo assim, para o otimizador È mais vantajoso realizar o acesso sequencial, uma vez que um grande bloco de dados ser· recuperado. */
 
-*/
+-- Plano de Consulta: Usando o Ìndice bitmap
+explain plan set statement_id = 'teste1' for
+    SELECT COUNT(*) FROM especie WHERE inteligente = 'V';
+SELECT plan_table_output
+FROM TABLE(dbms_xplan.display());
 
-/*
-6) Considere as consultas abaixo:
+/* Em contrapartida, em uma busca como a acima, o otimizador far· uso do Ìndice bitmap, pois n„o ser· necess·rio recuperar um grande volume de dados, apenas contar a quantidade de tuplas correspondentes. */
+
+
+/* 6) Considere as consultas abaixo:
 select * from estrela where classificacao = 'M3' and massa < 1;
-a) Crie um √≠ndice de chave composta que possa melhorar a performance da consulta. Analise os
-planos de consulta antes e depois da cria√ß√£o do √≠ndice para ter certeza do ganho de
-performance.
-*/
+a) Crie um Ìndice de chave composta que possa melhorar a performance da consulta. Analise os
+planos de consulta antes e depois da criaÁ„o do Ìndice para ter certeza do ganho de
+performance. */
 
 select * from estrela where classificacao = 'M3' and massa < 1;
 
@@ -517,7 +461,7 @@ explain plan set statement_id = 'teste1' for
 SELECT plan_table_output
 FROM TABLE(dbms_xplan.display());
 
-/*  Resultados antes da cria√ß√£o do √≠ndice
+/*  Resultados antes da criaÁ„o do Ìndice
 Plan hash value: 1653849300
  
 -----------------------------------------------------------------------------
@@ -530,15 +474,15 @@ Plan hash value: 1653849300
 Predicate Information (identified by operation id):
 ---------------------------------------------------
  
-   1 - filter("CLASSIFICACAO"='M3' AND "MASSA"<1)
-*/
+   1 - filter("CLASSIFICACAO"='M3' AND "MASSA"<1) */
 
+-- CriaÁ„o do Ìndice:
 create index idx_classificacao_massa
     on estrela(classificacao, massa);
 
 drop index idx_classificacao_massa;
 
-/*   Resultados depois da cria√ß√£o do √≠ndice:
+/*   Resultados depois da criaÁ„o do Ìndice:
 Plan hash value: 1653849300
  
 -----------------------------------------------------------------------------
@@ -551,16 +495,38 @@ Plan hash value: 1653849300
 Predicate Information (identified by operation id):
 ---------------------------------------------------
  
-   1 - filter("CLASSIFICACAO"='M3' AND "MASSA"<1)  
-*/
+   1 - filter("CLASSIFICACAO"='M3' AND "MASSA"<1) */
+/* Podemos observar que, mesmo com a criaÁ„o do Ìndice, o otimizador continua varrendo toda a tabela. Isso ocorre pois ele precisar· recuparar uma grande quantidade de dados, n„o sendo vantajoso o uso do Ìndice.
+Entretanto, em buscas em que o objetivo seja recuperar os dados de algum atrbuto que est· indexado, o otimizador far· uso do Ìndice, como no exemplo abaixo: */
+
+select massa from estrela where classificacao = 'M3' and massa < 1;
+
+-- Plano de Consulta: Consulta 01
+explain plan set statement_id = 'teste1' for
+    select massa from estrela where classificacao = 'M3' and massa < 1;
+SELECT plan_table_output
+FROM TABLE(dbms_xplan.display());
 
 /*
-b) Execute as consultas abaixo, e analise os planos de execu√ß√£o gerados pelo otimizador. Em
-qual(ai) dela(s) o √≠ndice √© utilizado e em qual(is) n√£o √©. Explique a raz√£o em cada caso.
+Plan hash value: 3833001942
+ 
+--------------------------------------------------------------------------------------------
+| Id  | Operation        | Name                    | Rows  | Bytes | Cost (%CPU)| Time     |
+--------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT |                         |    58 |   928 |     2   (0)| 00:00:01 |
+|*  1 |  INDEX RANGE SCAN| IDX_CLASSIFICACAO_MASSA |    58 |   928 |     2   (0)| 00:00:01 |
+--------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   1 - access("CLASSIFICACAO"='M3' AND "MASSA"<1) */
+   
+/* b) Execute as consultas abaixo, e analise os planos de execuÁ„o gerados pelo otimizador. Em
+qual(ai) dela(s) o Ìndice È utilizado e em qual(is) n„o È. Explique a raz„o em cada caso.
 select * from estrela where classificacao = 'M3' or massa < 1;
 select * from estrela where classificacao = 'M3';
-select * from estrela where massa < 1;
-*/
+select * from estrela where massa < 1; */
 
 -- Consulta 01
 select * from estrela where classificacao = 'M3' or massa < 1;
@@ -571,8 +537,7 @@ explain plan set statement_id = 'teste1' for
 SELECT plan_table_output
 FROM TABLE(dbms_xplan.display());
 
-/* 
--- Antes da cria√ß√£o do √≠ndice
+/*  Resultado antes da criaÁ„o do Ìndice:
 Plan hash value: 1653849300
  
 -----------------------------------------------------------------------------
@@ -585,10 +550,9 @@ Plan hash value: 1653849300
 Predicate Information (identified by operation id):
 ---------------------------------------------------
  
-   1 - filter("MASSA"<1 OR "CLASSIFICACAO"='M3')
+   1 - filter("MASSA"<1 OR "CLASSIFICACAO"='M3') */
    
-   
--- Depois da cria√ß√£o do √≠ndice:
+/* Resultado depois da criaÁ„o do Ìndice:
 Plan hash value: 1653849300
  
 -----------------------------------------------------------------------------
@@ -601,19 +565,21 @@ Plan hash value: 1653849300
 Predicate Information (identified by operation id):
 ---------------------------------------------------
  
-   1 - filter("MASSA"<1 OR "CLASSIFICACAO"='M3')
-*/
+   1 - filter("MASSA"<1 OR "CLASSIFICACAO"='M3') */
+   
+/* Nessa consulta, o otimizador realiza uma busca sequencial, pois ser· nececss·rio recuperar um grande volume de dados.
+Sendo assim, o Ìndice criado n„o È utilizado. */
 
 -- Consulta 02
 select * from estrela where classificacao = 'M3';
 
--- Plano de Consulta: Consulta 02
+-- Plano de Consulta:
 explain plan set statement_id = 'teste1' for
     select * from estrela where classificacao = 'M3';
 SELECT plan_table_output
 FROM TABLE(dbms_xplan.display());
-/*
--- Antes da cria√ß√£o do √≠ndice:
+
+/* Resultado antes da criaÁ„o do Ìndice:
 Plan hash value: 1653849300
  
 -----------------------------------------------------------------------------
@@ -626,9 +592,9 @@ Plan hash value: 1653849300
 Predicate Information (identified by operation id):
 ---------------------------------------------------
  
-   1 - filter("CLASSIFICACAO"='M3')
-   
--- Depois da cria√ß√£o do √≠ndice:
+   1 - filter("CLASSIFICACAO"='M3') */
+
+/* Resultado depois da criaÁ„o do Ìndice:
 Plan hash value: 1653849300
  
 -----------------------------------------------------------------------------
@@ -641,19 +607,21 @@ Plan hash value: 1653849300
 Predicate Information (identified by operation id):
 ---------------------------------------------------
  
-   1 - filter("CLASSIFICACAO"='M3')
-*/
+   1 - filter("CLASSIFICACAO"='M3') */
+
+/* Semelhantemente ‡ consulta anterior, o otimizador realiza uma busca sequencial, pois ser· nececss·rio recuperar um grande volume de dados.
+Sendo assim, o Ìndice criado n„o È utilizado. */
 
 -- Consulta 03
 select * from estrela where massa < 1;
 
--- Plano de Consulta: Consulta 03
+-- Plano de Consulta:
 explain plan set statement_id = 'teste1' for
     select * from estrela where massa < 1;
 SELECT plan_table_output
 FROM TABLE(dbms_xplan.display());
-/*
---  Antes da cria√ß√£o do √≠ndice:
+
+/*  Resultado antes da criaÁ„o do Ìndice:
 Plan hash value: 1653849300
  
 -----------------------------------------------------------------------------
@@ -666,9 +634,9 @@ Plan hash value: 1653849300
 Predicate Information (identified by operation id):
 ---------------------------------------------------
  
-   1 - filter("MASSA"<1)
-
--- Depois da cria√ß√£o do √≠ndice:
+   1 - filter("MASSA"<1) */
+   
+/* Resultado depois da criaÁ„o do Ìndice:
 Plan hash value: 1653849300
  
 -----------------------------------------------------------------------------
@@ -681,16 +649,82 @@ Plan hash value: 1653849300
 Predicate Information (identified by operation id):
 ---------------------------------------------------
  
-   1 - filter("MASSA"<1)
-*/
+   1 - filter("MASSA"<1) */
 
--- SILMAR --
-/*
-7) Crie um √≠ndice que melhore a performance da consulta abaixo. Apresente os planos de execu√ß√£o
-antes e depois do √≠ndice e explique porque sua solu√ß√£o funciona (qual foi sua linha de racioc√≠nio?).
+/* Semelhantemente ‡s consultas anteriores, o otimizador realiza uma busca sequencial, pois ser· nececss·rio recuperar um grande volume de dados.
+Sendo assim, o Ìndice criado n„o È utilizado. */
+
+
+/* 7) Crie um Ìndice que melhore a performance da consulta abaixo. Apresente os planos de execuÁ„o
+antes e depois do Ìndice e explique porque sua soluÁ„o funciona (qual foi sua linha de raciocÌnio?).
 select classificacao, count(*) from estrela
-group by classificacao;
-8) Pesquise sobre bitmap join index. Elabore uma consulta com jun√ß√£o que possa se beneficiar desse
-tipo de √≠ndice e explique o porqu√™. Crie o √≠ndice e analise os planos de consulta antes e depois.
-OBS: se for usar alguma tabela que est√° vazia, fa√ßa as devidas inser√ß√µes para teste.
-*/
+group by classificacao; */
+
+/* 8) Pesquise sobre bitmap join index. Elabore uma consulta com junÁ„o que possa se beneficiar desse
+tipo de Ìndice e explique o porquÍ. Crie o Ìndice e analise os planos de consulta antes e depois.
+OBS: se for usar alguma tabela que est· vazia, faÁa as devidas inserÁıes para teste. */
+
+/* Suponhamos que seja comum consultar o n˙mero de espÈcies cujo planeta de origem È de determinada classificaÁ„o.
+Uma consulta desse tipo pode ser: */
+
+SELECT COUNT(*) 
+FROM   especie, planeta 
+WHERE  especie.planeta_or = planeta.id_astro 
+AND    planeta.classificacao = 'Confirmed';
+
+explain plan set statement_id = 'teste1' for
+    SELECT COUNT(*) 
+    FROM   especie, planeta 
+    WHERE  especie.planeta_or = planeta.id_astro 
+    AND    planeta.classificacao = 'Confirmed';
+SELECT plan_table_output
+FROM TABLE(dbms_xplan.display());
+
+/* Para essa consulta, È gerado o seguinte plano de consulta:
+Plan hash value: 86740029
+ 
+-------------------------------------------------------------------------------
+| Id  | Operation           | Name    | Rows  | Bytes | Cost (%CPU)| Time     |
+-------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT    |         |     1 |    61 |   207   (2)| 00:00:01 |
+|   1 |  SORT AGGREGATE     |         |     1 |    61 |            |          |
+|*  2 |   HASH JOIN         |         |  7865 |   468K|   207   (2)| 00:00:01 |
+|*  3 |    TABLE ACCESS FULL| PLANETA |  5190 |   238K|   137   (1)| 00:00:01 |
+|   4 |    TABLE ACCESS FULL| ESPECIE | 49994 |   683K|    69   (2)| 00:00:01 |
+-------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   2 - access("ESPECIE"."PLANETA_OR"="PLANETA"."ID_ASTRO")
+   3 - filter("PLANETA"."CLASSIFICACAO"='Confirmed') */
+
+/* Note que, para localizar as linhas correspondentes, È realizada uma varredura nas tabelas.
+A fim de minimizar o custo dessa busca, pode-se criar um bitmap join index. Dessa froma, ser· possÌvel recuperar os dados a partir do Ìndice: */
+
+CREATE BITMAP INDEX idx_especie
+ON     especie (planeta.classificacao) 
+FROM   especie, planeta
+WHERE  especie.planeta_or = planeta.id_astro;
+
+drop index idx_especie;
+
+/* ApÛs a criaÁ„o do Ìndice, temos o plano de consulta abaixo:
+Plan hash value: 1605055779
+ 
+-------------------------------------------------------------------------------------------
+| Id  | Operation                   | Name        | Rows  | Bytes | Cost (%CPU)| Time     |
+-------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT            |             |     1 |    14 |    23   (0)| 00:00:01 |
+|   1 |  SORT AGGREGATE             |             |     1 |    14 |            |          |
+|   2 |   BITMAP CONVERSION COUNT   |             |     2 |    28 |    23   (0)| 00:00:01 |
+|*  3 |    BITMAP INDEX SINGLE VALUE| IDX_ESPECIE |       |       |            |          |
+-------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   3 - access("ESPECIE"."SYS_NC00004$"='Confirmed') */
+
+/* Podemos observar que, com o Ìndice, houve uma grande reduÁ„o nos custos, estimativas de linhas e bytes.
+Sendo assim, a busca se tornou muito mais eficiente. */

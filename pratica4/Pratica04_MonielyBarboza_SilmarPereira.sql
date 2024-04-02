@@ -465,6 +465,10 @@ drop index idx_inteligente;
 c) Discuta vantagem(ns) e desvantagem(ns) da criação do índice. Use os planos de consulta gerados
 após a criação do índice para embasar sua resposta
 
+A criação de um índice bitmap possibilita uma mehoria no desempenho das consultas que filtram dados com base em colunas que possuem um número limitado de valores distintos, como booleanos ou valores discretos, como no caso da coluna inteligente que tem apenas os valores 'V' e 'F'. Outra vantagem consiste na redução dos acessos ao disco e da sobrecarga da CPU, já que índices bitmap geralmente são mais eficientes em termos de CPU do que outras formas de índices.
+
+Em contrapartida, é importante considerar que o índice bitmap pode consumir mais espaço de armazenamento, especiealmente em tabelas grandes ou colunas com vários valores distintos. Além disso, há o custo de overhead de atualização que ocorrerá em todas as operações de inserção, atualização e exclusão da tabela.
+
 Resultado após a criação do índice: Consulta 01
 Plan hash value: 139595281
  

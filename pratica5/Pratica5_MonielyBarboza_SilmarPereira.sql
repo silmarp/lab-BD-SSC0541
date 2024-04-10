@@ -266,18 +266,80 @@ CREATE VIEW vw_lider_nacao_especie as
 	SELECT l.cpi, l.nome, l.cargo, l.NACAO, n.FEDERACAO, l.especie, e.PLANETA_OR  
 	FROM lider l, NACAO n, ESPECIE e  
 	WHERE l.NACAO = n.NOME AND l.ESPECIE = e.NOME; 
--- TODO refazer usando joins
 /*
 É parcialmente atualizavel, apenas a tabela lider pode ser atualizada por conta 
 da preservação de chave, pois essa é a unica que para cada tupla da tabela base
 há apenas 1 correspondente na view, afinal nação e especie podem ser as mesmas 
 da de outros lideres 
 */
-DROP VIEW vw_lider_nacao_especie;
-
 
 /* b) Faça operações de inserção, atualização e remoção na view. Explique o efeito de cada
 operação nas tabelas base. */
+INSERT INTO vw_lider_nacao_especie
+	VALUES ('123.456.789-00', 'Sec', 'CIENTISTA', 'Gallyos', 'Homo Tempus', 'tempo', 'Gallifrey');
+
+/*
+SQL Error [1776] [42000]: ORA-01776: cannot modify more than one base table through a join view
+
+O resultado dessa inserção é o erro apresentado acima, que ocorre pois estamos 
+tentando inserir valores na tabela lider (editavel) entretanto também tentamos
+inserir valores nas tabelas de espécie e nação, que nesse caso são não editaveis 
+*/
+
+INSERT INTO vw_lider_nacao_especie (CPI, NOME, CARGO, NACAO, ESPECIE)
+	VALUES ('123.456.789-00', 'Sec', 'CIENTISTA', 'Gallyos', 'Homo Tempus');
+
+SELECT * FROM vw_lider_nacao_especie;
+/*
+408.540.985-55	Davros	CIENTISTA 	Império Dalek	Kaleds Extermum	obscuros	Skaro
+123.543.908-12	Borusa	OFICIAL   	Gallyos	Homo    Tempus	        tempo	    Gallifrey
+123.456.789-00	Sec	    CIENTISTA 	Gallyos	Homo    Tempus	        tempo	    Gallifrey
+
+Como podemos ver na query acima, apesar da inserção ser semelhante a feita anteriormente
+apenas sem os valores de federação e planeta de origem dessa vez não obtemos nenhum erro
+e o valor inserido aparece na tabela. ao se fazer uma consulta.
+*/
+
+UPDATE VW_LIDER_NACAO_ESPECIE 
+	SET CARGO = 'COMANDANTE',NOME = 'Alfred', PLANETA_OR = 'Skaro'
+	WHERE CPI = '123.456.789-00';
+
+UPDATE VW_LIDER_NACAO_ESPECIE 
+	SET CARGO = 'COMANDANTE',NOME = 'Alfred', FEDERACAO = 'obscuros'
+	WHERE CPI = '123.456.789-00';
+
+/*
+SQL Error [1776] [42000]: ORA-01776: cannot modify more than one base table through a join view
+
+Para ambos os updates observamos o erro acima, que acontece ao tentarmos modificar algo referente
+as tabelas de espécia ou nação, que como já mencionadas são não editaveis nesse caso em questão   
+*/
+
+UPDATE VW_LIDER_NACAO_ESPECIE 
+	SET CARGO = 'COMANDANTE',NOME = 'Alfred'
+	WHERE CPI = '123.456.789-00';
+
+SELECT * FROM vw_lider_nacao_especie WHERE CPI='123.456.789-00';
+
+/*
+123.456.789-00	Alfred	COMANDANTE	Gallyos	Homo Tempus	tempo	Gallifrey
+
+Diferentemente dos outros updates feitos, esse altera apenas dados da tabela lider
+que é editavel, portanto é bem sucedida, como podemos ver no resultado da consulta.
+*/
+
+DELETE FROM VW_LIDER_NACAO_ESPECIE WHERE CPI='123.456.789-00' AND PLANETA_OR = 'Gallifrey' and FEDERACAO='tempo';
+
+SELECT * FROM vw_lider_nacao_especie;
+/*
+408.540.985-55	Davros	CIENTISTA 	Império Dalek	Kaleds Extermum	obscuros	Skaro
+123.543.908-12	Borusa	OFICIAL   	Gallyos			Homo Tempus		tempo		Gallifrey
+
+Como podemos ver pela consulta, apesar de usarmos dados de tabelas não atualizaveis
+o delete foi bem sucedido, isso decorre do comportamento do delete, que realiza a 
+operação na tabela com preservação de chave, independentemente se usamos ou não
+dados de tabelas não atualizaveis.
+*/
     
 /* 5) Crie uma view que armazene, para cada facção: nome da facção, CPI e nome do lider, e ideologia. */
 
@@ -325,3 +387,41 @@ WHERE LIDER_NOME = 'Devros';
 aninhada. Para a criação das visões, pesquise e use diferentes parâmetros de: momento em que a
 visão é efetivamente populada (ex: build immediate), tipo de refresh (ex: refresh fast) e
 momento em que o refresh é realizado (ex: on commit). */
+CREATE MATERIALIZED VIEW VW_LIDER_ESPECIE  
+	BUILD IMMEDIATE AS 
+	SELECT L.CPI, L.NOME, L.NACAO, L.ESPECIE, E.PLANETA_OR AS ESPECIE_ORIGEM, F.NOME AS FACCAO
+	FROM LIDER L JOIN ESPECIE E
+	ON L.ESPECIE = E.NOME 
+    	LEFT JOIN FACCAO F
+    	ON L.CPI = F.LIDER;
+    
+DROP MATERIALIZED VIEW VW_LIDER_ESPECIE;
+
+CREATE MATERIALIZED VIEW log ON ESPECIE WITH ROWID (NOME, PLANETA_OR) INCLUDING NEW VALUES;
+-- DROP MATERIALIZED VIEW log ON especie;
+CREATE MATERIALIZED VIEW vw_planeta_qtdEspecie
+refresh fast ON COMMIT as
+SELECT e.PLANETA_OR, count(*) 
+	FROM ESPECIE e GROUP BY PLANETA_OR;
+
+-- DROP VIEW VW_PLANETA_QTDESPECIE;
+CREATE MATERIALIZED VIEW vw_orbita
+BUILD DEFERRED refresh complete ON DEMAND AS 
+SELECT DISTINCT E.NOME, E.CLASSIFICACAO
+FROM ESTRELA E, PLANETA P
+WHERE NOT EXISTS  (
+    (   SELECT OP.PLANETA
+        FROM ORBITA_PLANETA OP
+        WHERE OP.ESTRELA = 'ALF CMa C'
+    )
+    MINUS
+    (   SELECT OP.PLANETA
+        FROM ORBITA_PLANETA OP
+        WHERE OP.ESTRELA = E.ID_ESTRELA)
+	)
+    AND E.ID_ESTRELA  != 'ALF CMa C';
+
+
+
+
+

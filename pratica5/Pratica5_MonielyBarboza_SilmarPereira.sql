@@ -70,9 +70,113 @@ a) A primeira view deve permitir a inserção de facções não tradicionalistas. Ins
 facções tradicionalistas e não tradicionalistas (efetive com commit). Mostre o resultado na
 view e na tabela base. */
 
+CREATE VIEW vw_tradicionalistas AS
+	SELECT NOME, LIDER, IDEOLOGIA FROM FACCAO WHERE IDEOLOGIA = 'TRADICIONALISTA';
+
+SELECT * FROM vw_tradicionalistas; 
+/* resultados da view
+tempo	123.543.908-12	TRADICIONALISTA
+Daleks	408.540.985-55	TRADICIONALISTA
+*/
+
+INSERT INTO LIDER
+	VALUES(
+		'400.289.226-12', 'liderInsert', 'CIENTISTA', 
+		'Império Dalek',
+		'Kaleds Extermum'
+	);
+INSERT INTO VW_TRADICIONALISTAS VALUES ('testInsert', '400.289.226-12', 'PROGRESSITA')
+
+INSERT INTO LIDER
+	VALUES(
+		'430.289.226-12', 'liderInsert', 'CIENTISTA', 
+		'Império Dalek',
+		'Kaleds Extermum'
+	);
+INSERT INTO VW_TRADICIONALISTAS VALUES ('testInsert2', '430.289.226-12', 'TRADICIONALISTA');
+
+COMMIT;
+
+SELECT * FROM vw_tradicionalistas;
+/* Resultado da view após inserções
+tempo	123.543.908-12	TRADICIONALISTA
+Daleks	408.540.985-55	TRADICIONALISTA
+testInsert2	430.289.226-12	TRADICIONALISTA 
+*/
+SELECT * FROM faccao;
+/* Tabela inteira apos as inserções
+tempo	123.543.908-12	TRADICIONALISTA
+Daleks	408.540.985-55	TRADICIONALISTA
+testInsert	400.289.226-12	PROGRESSITA
+testInsert2	430.289.226-12	TRADICIONALISTA
+ 
+*/
+
+DROP VIEW vw_tradicionalistas;
+
 /* b) A segunda view não deve permitir facções diferentes de tradicionalistas. Faça testes como no
 item anterior. */
+CREATE VIEW vw_tradicionalistas AS
+	SELECT NOME, LIDER, IDEOLOGIA FROM FACCAO WHERE IDEOLOGIA = 'TRADICIONALISTA'
+WITH CHECK OPTION;
 
+SELECT * FROM vw_tradicionalistas; 
+/* Resultado da view antes das inserções
+tempo	123.543.908-12	TRADICIONALISTA
+Daleks	408.540.985-55	TRADICIONALISTA
+testInsert2	430.289.226-12	TRADICIONALISTA 
+*/
+INSERT INTO LIDER
+	VALUES(
+		'470.289.226-12', 'liderInsert', 'CIENTISTA', 
+		'Império Dalek',
+		'Kaleds Extermum'
+	);
+INSERT INTO VW_TRADICIONALISTAS VALUES ('testInsert3', '470.289.226-12', 'PROGRESSITA')
+/*
+SQL Error [1402] [44000]: ORA-01402: view WITH CHECK OPTION where-clause violation
+Operação não permitida por conta do uso do check option
+*/
+
+INSERT INTO LIDER
+	VALUES(
+		'480.289.226-12', 'liderInsert', 'CIENTISTA', 
+		'Império Dalek',
+		'Kaleds Extermum'
+	);
+INSERT INTO VW_TRADICIONALISTAS VALUES ('testInsert4', '480.289.226-12', 'TRADICIONALISTA');
+COMMIT;
+
+SELECT * FROM VW_TRADICIONALISTAS;
+/* resultado da view apos as inserções
+tempo	123.543.908-12	TRADICIONALISTA
+Daleks	408.540.985-55	TRADICIONALISTA
+testInsert2	430.289.226-12	TRADICIONALISTA
+testInsert4	480.289.226-12	TRADICIONALISTA
+*/
+SELECT * FROM FACCAO;
+/* resultado na tabela apos as inserções
+tempo	123.543.908-12	TRADICIONALISTA
+Daleks	408.540.985-55	TRADICIONALISTA
+testInsert	400.289.226-12	PROGRESSITA
+testInsert2	430.289.226-12	TRADICIONALISTA
+testInsert4	480.289.226-12	TRADICIONALISTA
+
+Notamos a inserção da tupla tradicionalista deu certo enquando a progressita deu errado
+*/
+DROP VIEW vw_tradicionalistas;
+
+DELETE FROM FACCAO WHERE nome = 'testInsert';
+DELETE FROM FACCAO WHERE nome = 'testInsert2';
+DELETE FROM lider WHERE cpi = '400.289.226-12';
+DELETE FROM lider WHERE cpi = '430.289.226-12';
+
+--DELETE FROM FACCAO WHERE nome = 'testeInsert'; not needed
+DELETE FROM FACCAO WHERE nome = 'testInsert4';
+DELETE FROM lider WHERE cpi = '470.289.226-12';
+DELETE FROM lider WHERE cpi = '480.289.226-12';
+
+COMMIT;
 
 /* 3) Crie uma view que armazene, para cada estrela orbitada por planeta, nome e coordenadas da
 estrela, e id e classificação dos planetas que a orbitam. */
@@ -157,6 +261,21 @@ GROUP BY(ESTRELA);
 /* 4) Crie uma view que armazene, para cada lider: CPI, nome, cargo, sua nação e respectiva federação,
 sua espécie e respectivo planeta de origem. */
 /* a) A view é atualizável? Explique. */
+
+CREATE VIEW vw_lider_nacao_especie as
+	SELECT l.cpi, l.nome, l.cargo, l.NACAO, n.FEDERACAO, l.especie, e.PLANETA_OR  
+	FROM lider l, NACAO n, ESPECIE e  
+	WHERE l.NACAO = n.NOME AND l.ESPECIE = e.NOME; 
+-- TODO refazer usando joins
+/*
+É parcialmente atualizavel, apenas a tabela lider pode ser atualizada por conta 
+da preservação de chave, pois essa é a unica que para cada tupla da tabela base
+há apenas 1 correspondente na view, afinal nação e especie podem ser as mesmas 
+da de outros lideres 
+*/
+DROP VIEW vw_lider_nacao_especie;
+
+
 /* b) Faça operações de inserção, atualização e remoção na view. Explique o efeito de cada
 operação nas tabelas base. */
     

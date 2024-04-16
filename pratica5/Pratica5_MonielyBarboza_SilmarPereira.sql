@@ -270,9 +270,9 @@ sua espécie e respectivo planeta de origem. */
 /* a) A view é atualizável? Explique. */
 
 CREATE VIEW vw_lider_nacao_especie as
-	SELECT l.cpi, l.nome, l.cargo, l.NACAO, n.FEDERACAO, l.especie, e.PLANETA_OR  
-	FROM lider l, NACAO n, ESPECIE e  
-	WHERE l.NACAO = n.NOME AND l.ESPECIE = e.NOME; 
+    SELECT l.cpi, l.nome, l.cargo, l.NACAO, l.especie, n.FEDERACAO, e.PLANETA_OR
+        FROM lider l JOIN NACAO n ON l.NACAO = n.NOME
+        JOIN ESPECIE e  ON l.ESPECIE = e.NOME;
 /*
 É parcialmente atualizavel, apenas a tabela lider pode ser atualizada por conta 
 da preservação de chave, pois essa é a unica que para cada tupla da tabela base

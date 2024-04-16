@@ -289,8 +289,9 @@ INSERT INTO vw_lider_nacao_especie
 SQL Error [1776] [42000]: ORA-01776: cannot modify more than one base table through a join view
 
 O resultado dessa inserção é o erro apresentado acima, que ocorre pois estamos 
-tentando inserir valores na tabela lider (editavel) entretanto também tentamos
-inserir valores nas tabelas de espécie e nação, que nesse caso são não editaveis 
+tentando inserir valores na tabela editavel lider, por ter preservação de 
+chave entretanto também tentamos inserir valores nas tabelas de espécie e
+nação, que nesse caso são não editaveis 
 */
 
 INSERT INTO vw_lider_nacao_especie (CPI, NOME, CARGO, NACAO, ESPECIE)
@@ -302,9 +303,9 @@ SELECT * FROM vw_lider_nacao_especie;
 123.543.908-12	Borusa	OFICIAL   	Gallyos	Homo    Tempus	        tempo	    Gallifrey
 123.456.789-00	Sec	    CIENTISTA 	Gallyos	Homo    Tempus	        tempo	    Gallifrey
 
-Como podemos ver na query acima, apesar da inserção ser semelhante a feita anteriormente
-apenas sem os valores de federação e planeta de origem dessa vez não obtemos nenhum erro
-e o valor inserido aparece na tabela. ao se fazer uma consulta.
+Como podemos ver na query acima, essa inserção funciona, pois apesar de ser 
+semelhante a feita anteriormente ela não possui valores de federação e planeta
+de origem assim, não tenta inserir nada em tabelas que não são editaveis.
 */
 
 UPDATE VW_LIDER_NACAO_ESPECIE 
@@ -319,7 +320,8 @@ UPDATE VW_LIDER_NACAO_ESPECIE
 SQL Error [1776] [42000]: ORA-01776: cannot modify more than one base table through a join view
 
 Para ambos os updates observamos o erro acima, que acontece ao tentarmos modificar algo referente
-as tabelas de espécia ou nação, que como já mencionadas são não editaveis nesse caso em questão   
+as tabelas de espécia ou nação, que como já mencionadas são não editaveis e portanto
+não podemos fazer updates.
 */
 
 UPDATE VW_LIDER_NACAO_ESPECIE 
@@ -345,7 +347,7 @@ SELECT * FROM vw_lider_nacao_especie;
 Como podemos ver pela consulta, apesar de usarmos dados de tabelas não atualizaveis
 o delete foi bem sucedido, isso decorre do comportamento do delete, que realiza a 
 operação na tabela com preservação de chave, independentemente se usamos ou não
-dados de tabelas não atualizaveis.
+dados de tabelas não atualizaveis para fazermos a query.
 */
     
 /* 5) Crie uma view que armazene, para cada facção: nome da facção, CPI e nome do lider, e ideologia. */

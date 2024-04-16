@@ -283,7 +283,7 @@ da de outros lideres
 /* b) Faça operações de inserção, atualização e remoção na view. Explique o efeito de cada
 operação nas tabelas base. */
 INSERT INTO vw_lider_nacao_especie
-	VALUES ('123.456.789-00', 'Sec', 'CIENTISTA', 'Gallyos', 'Homo Tempus', 'tempo', 'Gallifrey');
+	VALUES ('123.456.789-00', 'Bruce', 'CIENTISTA', 'Gallyos', 'Homo Tempus', 'tempo', 'Gallifrey');
 
 /*
 SQL Error [1776] [42000]: ORA-01776: cannot modify more than one base table through a join view
@@ -295,13 +295,13 @@ nação, que nesse caso são não editaveis
 */
 
 INSERT INTO vw_lider_nacao_especie (CPI, NOME, CARGO, NACAO, ESPECIE)
-	VALUES ('123.456.789-00', 'Sec', 'CIENTISTA', 'Gallyos', 'Homo Tempus');
+	VALUES ('123.456.789-00', 'Bruce', 'CIENTISTA', 'Gallyos', 'Homo Tempus');
 
 SELECT * FROM vw_lider_nacao_especie;
 /*
 408.540.985-55	Davros	CIENTISTA 	Império Dalek	Kaleds Extermum	obscuros	Skaro
 123.543.908-12	Borusa	OFICIAL   	Gallyos	Homo    Tempus	        tempo	    Gallifrey
-123.456.789-00	Sec	    CIENTISTA 	Gallyos	Homo    Tempus	        tempo	    Gallifrey
+123.456.789-00	Bruce   CIENTISTA 	Gallyos	Homo    Tempus	        tempo	    Gallifrey
 
 Como podemos ver na query acima, essa inserção funciona, pois apesar de ser 
 semelhante a feita anteriormente ela não possui valores de federação e planeta
@@ -395,16 +395,30 @@ WHERE LIDER_NOME = 'Devros';
 /* 6) Crie pelo menos 1 visão materializada de cada tipo principal: com junção, com agregação, e
 aninhada. Para a criação das visões, pesquise e use diferentes parâmetros de: momento em que a
 visão é efetivamente populada (ex: build immediate), tipo de refresh (ex: refresh fast) e
-momento em que o refresh é realizado (ex: on commit). */
+momento em que o refresh é realizado (ex: on commit).
+
+Usando build immediate que irá popular a view no momento de sua criação,
+opção de refresh force que tenta um refresh fast se houver log, se não faz um
+refresh complete e refresh on demand em uma view com junções  
+*/
 CREATE MATERIALIZED VIEW VW_LIDER_ESPECIE  
-	BUILD IMMEDIATE AS 
-	SELECT L.CPI, L.NOME, L.NACAO, L.ESPECIE, E.PLANETA_OR AS ESPECIE_ORIGEM, F.NOME AS FACCAO
-	FROM LIDER L JOIN ESPECIE E
-	ON L.ESPECIE = E.NOME 
-    	LEFT JOIN FACCAO F
-    	ON L.CPI = F.LIDER;
-    
-DROP MATERIALIZED VIEW VW_LIDER_ESPECIE;
+	BUILD IMMEDIATE 
+	REFRESH FORCE ON DEMAND AS 
+		SELECT E.NOME, E.PLANETA_OR, P.CLASSIFICACAO AS PLANETA_TIPO, OP.ESTRELA AS ESTRELA_ORBITADA 
+			FROM ESPECIE E  JOIN PLANETA P
+			ON E.PLANETA_OR = P.ID_ASTRO
+			JOIN ORBITA_PLANETA OP 
+			ON OP.PLANETA = E.PLANETA_OR;
+
+-- DROP MATERIALIZED VIEW VW_LIDER_ESPECIE;
+
+/*
+Agora em uma consulta com agregação usando Build immediate, refresh fast on commit,
+importante notar que para a possibilitar o uso do refresh fast necessitamos criar um
+log da tabela e atributos que usaremos e esse log será usado para pupular a view, ademais
+como usamos refresh on commit, a view terá refresh toda vez que for commitado uma alteração
+nas tabelas usadas.
+*/
 
 CREATE MATERIALIZED VIEW log ON ESPECIE WITH ROWID (NOME, PLANETA_OR) INCLUDING NEW VALUES;
 -- DROP MATERIALIZED VIEW log ON especie;
@@ -414,23 +428,16 @@ SELECT e.PLANETA_OR, count(*)
 	FROM ESPECIE e GROUP BY PLANETA_OR;
 
 -- DROP VIEW VW_PLANETA_QTDESPECIE;
+
+/*
+Na consulta aninhada de planetas ainda dominados, porem sem vida inteligente usamos Build 
+defered, que fará a view ser populada no proximo refresh, com refresh complete, ou seja
+a query é refeita e refresh on demand. 
+*/
 CREATE MATERIALIZED VIEW vw_orbita
-BUILD DEFERRED refresh complete ON DEMAND AS 
-SELECT DISTINCT E.NOME, E.CLASSIFICACAO
-FROM ESTRELA E, PLANETA P
-WHERE NOT EXISTS  (
-    (   SELECT OP.PLANETA
-        FROM ORBITA_PLANETA OP
-        WHERE OP.ESTRELA = 'ALF CMa C'
-    )
-    MINUS
-    (   SELECT OP.PLANETA
-        FROM ORBITA_PLANETA OP
-        WHERE OP.ESTRELA = E.ID_ESTRELA)
-	)
-    AND E.ID_ESTRELA  != 'ALF CMa C';
-
-
-
-
-
+BUILD DEFERRED 
+refresh complete ON DEMAND AS 
+SELECT p.ID_ASTRO FROM PLANETA p WHERE p.ID_ASTRO IN
+	(SELECT D.PLANETA FROM DOMINANCIA D WHERE DATA_FIM IS NULL)
+	MINUS 
+	(SELECT e.PLANETA_OR FROM ESPECIE e WHERE e.INTELIGENTE = 'F');

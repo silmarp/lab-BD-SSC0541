@@ -17,12 +17,19 @@ a. sem GRANT OPTION; */
 GRANT SELECT ON ESTRELA TO a12623950;
 
 /* i. USER2 deve realizar uma consulta qualquer na tabela do USER1 para testar o privilégio; */
---TODO: colocar o comando select
+
+SELECT * FROM A12563800.ESTRELA e;
 /* O USER2 obteve sucesso com a consulta e acessou os dados da tabela ESTRELA
     
 /* ii. USER2 deve tentar realizar uma inserção na tabela do USER1 para testar o privilégio; */
+
+INSERT INTO A12563800.ESTRELA
+	VALUES ('Sarg250 M','Nika','HI772',651.684857458,17.421517,250.257428,-780.56308);
+
 /* Ao tentar executar uma inserção, obtemos o seguinte erro:
---TODO: Colocar o erro
+
+SQL Error [1031] [42000]: ORA-01031: insufficient privileges
+
 Isso ocorre pois o USER2 não possui o privilégio necessário para executar uma inserção. */
     
 /* iii. USER3 deve tentar realizar uma consulta qualquer na tabela do USER1 ; */
@@ -36,8 +43,11 @@ Isso ocorre pois USER3 não tem acesso à tabela, já que não recebeu permissã
 REVOKE SELECT ON ESTRELA FROM a12623950;
 
 /* v. USER2 deve realizar uma consulta na tabela do USER1 para testar. */
+
+SELECT * FROM A12563800.ESTRELA e ;
+
 /* Ao realizar a consulta após a revogação, recebemos a seguinte mensagem:
---TODO: colocar o erro
+SQL Error [942] [42000]: ORA-00942: table or view does not exist
 Isso ocorre pois o acesso à tabela ESTRELA do USER2 foi revogado. Logo, ele não pode mais consultá-la.
 
 /* b. com GRANT OPTION; */

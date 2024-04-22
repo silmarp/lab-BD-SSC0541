@@ -12,7 +12,7 @@ BEGIN
 	
 	IF NOT c_mais_orbitados%FOUND THEN RAISE NO_DATA_FOUND; END if;
 
-	dbms_output.put_line('Quantidade maxima de orbitantes é: ' || v_mais_orbitados.QTD);	
+	dbms_output.put_line('Quantidade maxima de orbitantes Ã©: ' || v_mais_orbitados.QTD);	
 	dbms_output.put_line('Estrela id: ' || v_mais_orbitados.ID_ESTRELA
 		|| ';  Estrela Nome: ' || v_mais_orbitados.NOME);
 
@@ -27,12 +27,12 @@ BEGIN
 
 	EXCEPTION
 		WHEN NO_DATA_FOUND THEN  
-			dbms_output.put_line('Não foram encontrados registros de orbita');
+			dbms_output.put_line('NÃ£o foram encontrados registros de orbita');
 END;
 
-/* 2. Implemente um programa PL/SQL que remova da base de dados todas as federações que não
-possuem nenhuma nação associada. Imprima a quantidade de federações removidas.
-OBS: use cursor implícito. Faça a remoção usando um único comando DELETE. */
+/* 2. Implemente um programa PL/SQL que remova da base de dados todas as federaÃ§Ãµes que nÃ£o
+possuem nenhuma naÃ§Ã£o associada. Imprima a quantidade de federaÃ§Ãµes removidas.
+OBS: use cursor implÃ­cito. FaÃ§a a remoÃ§Ã£o usando um Ãºnico comando DELETE. */
 
 BEGIN
     DELETE FROM FEDERACAO F WHERE F.NOME IN (
@@ -46,7 +46,7 @@ BEGIN
     COMMIT;
     EXCEPTION
     WHEN NO_DATA_FOUND
-        THEN dbms_output.put_line('Todas as federações estão associadas');
+        THEN dbms_output.put_line('Todas as federaÃ§Ãµes estÃ£o associadas');
 END;
 
 INSERT INTO FEDERACAO VALUES('P7_TESTE1', '17/04/2024');

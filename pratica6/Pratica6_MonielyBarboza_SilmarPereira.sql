@@ -47,7 +47,9 @@ REVOKE SELECT ON ESTRELA FROM a12623950;
 SELECT * FROM A12563800.ESTRELA e ;
 
 /* Ao realizar a consulta após a revogação, recebemos a seguinte mensagem:
+
 SQL Error [942] [42000]: ORA-00942: table or view does not exist
+
 Isso ocorre pois o acesso à tabela ESTRELA do USER2 foi revogado. Logo, ele não pode mais consultá-la.
 
 /* b. com GRANT OPTION; */
@@ -56,14 +58,18 @@ GRANT SELECT ON ESTRELA TO a12623950
 WITH GRANT OPTION;
 
 /* i. USER2 deve realizar uma consulta na tabela do USER1 para testar o privilégio; */
-    /* Tudo ok
+    /* Tudo ok */
 /* ii. USER2 deve conceder permissão de leitura na tabela do USER1 para o USER3 (sem GRANT
 OPTION); */
-    /* Tudo ok
+GRANT SELECT ON A12563800.ESTRELA
+	TO A10727952;
+
+/* Tudo ok */
+
 /* iii. USER3 deve realizar uma consulta na tabela do USER1 para testar o privilégio; */
     SELECT * FROM a12563800.ESTRELA;
     /* Resultados:
-    
+     Tudo ok 
     */
 
 /* iv. USER1 deve revogar o privilégio de leitura do USER2; */
@@ -83,7 +89,9 @@ WITH GRANT OPTION;
 
 
 /* a. USER2 deve inserir uma tupla na tabela do USER1 para testar o privilégio; */
-/* 
+
+INSERT INTO A12563800.ESTRELA (id_estrela,nome,massa,x,y,z)
+	VALUES ('Sarg250 MA','Nika', 61.6844646585,117.44654654,2500.465456,1850.465465465);
 
 /* b. USER1 e USER2 devem realizar uma consulta (select) na tabela para verificar a inserção da
 nova tupla:
@@ -99,9 +107,19 @@ permissão de inserção? */
 SELECT * FROM ESTRELA WHERE ID_ESTRELA = 'Sarg250 MA';
 /* Resultados: Não escontrado, pois a tupla ainda não foi inserida na tabela do USER1 */
 
+/* Consulta do user2: */
+SELECT * FROM A12563800.ESTRELA WHERE ID_ESTRELA = 'Sarg250 MA'; 
+/*
+Sarg250 MA	Nika		61.6844646585	117.44654654	2500.465456	1850.465465465 
+
+O resultado foi encontrado mesmo não tendo feito o commit ainda, isso ocorre pois a transação está sendo realizada pelo USER2, que pode acessar suas alterações antes do commit, entretando só serão possiveis de acessar por outro usuario após a efetivação da transação.
+*/
+
+COMMIT;
+
 -- DEPOIS DO USER2 REALIZAR COMMIT
 SELECT * FROM ESTRELA WHERE ID_ESTRELA = 'Sarg250 MA';
-/* Resultados: 
+/* Resultados para ambos os usuarios: 
 Sarg250 MA	Nika		61,6844646585	117,44654654	2500,465456	1850,465465465
 Após o commit, a tupla foi encontrada.
 Isso ocorre pois antes de realizar o commit a tupla ainda não foi inserida na tabela do USER1 e, por isso, o USER1 não pode encontrá-la.
@@ -109,6 +127,8 @@ Além disso, nos atributos que USER2 não tinha permissão, foi inserido null.
 */
 
 /* c. USER2 deve conceder a USER3 (sem GRANT OPTION) os mesmos privilégios recebidos; */
+GRANT SELECT, INSERT (ID_ESTRELA, NOME, MASSA, X, Y, Z) ON A12563800.ESTRELA
+	TO A10727952;
 /* d. Refaça os testes dos itens a e b agora considerando os três usuários. */
 /* e. USER1 deve revogar os privilégios do USER2. */
 
@@ -129,8 +149,38 @@ Implemente e teste esse cenário: */
 GRANT SELECT, REFERENCES(NOME, ESPECIE) ON COMUNIDADE TO a12623950;
 
 /* b) crie a tabela de curiosidades no esquema do USER2, de modo a atender as restrições acima; */
+
+CREATE TABLE COMUNIDADE_CURIOSIDADE(
+	COMUNIDADE VARCHAR2(15),
+	ESPECIE  VARCHAR2(15),
+	CURIOSIDADE  VARCHAR2(500) NOT NULL,
+	CONSTRAINT PK_COMUNIDADE_CURIOSIDADE PRIMARY KEY (COMUNIDADE, ESPECIE),
+	CONSTRAINT FK_CC_COMUNIDADE FOREIGN KEY (COMUNIDADE, ESPECIE) REFERENCES A12563800.COMUNIDADE(NOME, ESPECIE) ON DELETE CASCADE
+);
+
 /* c) faça inserções na tabela de curiosidades – teste inclusive inserção de curiosidades para comunidades
 que não existem na tabela de Comunidades do USER1; */
+
+INSERT INTO COMUNIDADE_CURIOSIDADE (ESPECIE, COMUNIDADE, CURIOSIDADE)
+	VALUES ('Kaleds Extermum', 'Kaledon', 'A super cool curiosity about this community');
+
+INSERT INTO COMUNIDADE_CURIOSIDADE (ESPECIE, COMUNIDADE, CURIOSIDADE)
+	VALUES ('Kaleds Extermum', 'Thals', 'Another super cool curiosity about this community');
+
+INSERT INTO COMUNIDADE_CURIOSIDADE (ESPECIE, COMUNIDADE, CURIOSIDADE)
+	VALUES ('Homo Tempus', 'Arcadia', 'An even cooler curiosity about this one');
+
+INSERT INTO COMUNIDADE_CURIOSIDADE (ESPECIE, COMUNIDADE, CURIOSIDADE)
+	VALUES ('Homo Denisovan', 'Eurasia', 'Fun fact, this community does not exist on USER1 tables');
+
+/*
+No caso de inserções que ultilizem uma comunidade que não existe na tabela original obtemos o seguinte erro:
+
+SQL Error [2291] [23000]: ORA-02291: integrity constraint (A12623950.FK_CC_COMUNIDADE) violated - parent key not found
+
+Que ocorre pois mesmo ultilizando comunidades de outro usuario como foreign key as regras de integridade ainda valem.
+*/
+
 /* d) remova da tabela de comunidades do USER1 uma comunidade para a qual exista curiosidade
 cadastrada na tabela de curiosidades do USER2. Explique o que acontece. */
 

@@ -125,7 +125,7 @@ INSERT INTO HABITACAO
 
 INSERT INTO HABITACAO
 	VALUES(
-		'Skaro', 'Kaleds Extermum', 'Restos de Skaro', /*pós guerra civil dalek*/
+		'Skaro', 'Kaleds Extermum', 'Restos de Skaro', /*pÃ³s guerra civil dalek*/
 		TO_DATE('15/12/3050', 'dd/mm/yyyy'),
 		NULL
 	);

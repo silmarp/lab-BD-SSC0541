@@ -30,13 +30,13 @@ INSERT INTO A12563800.ESTRELA
 
 SQL Error [1031] [42000]: ORA-01031: insufficient privileges
 
-Isso ocorre pois o USER2 nÃ£o possui o privilegio necessario para executar uma insercao. */
+Isso ocorre pois o USER2 nao possui o privilegio necessario para executar uma insercao. */
     
 /* iii. USER3 deve tentar realizar uma consulta qualquer na tabela do USER1 ; */
 SELECT * FROM a12563800.ESTRELA;
 /* Ao executar a consulta, recebemos a seguinte mensagem:
---TODO: colocar o erro
-Isso ocorre pois USER3 naoo tem acesso a  tabela, ja que nao recebeu permissao para acessa-la. */
+SQL Error [942] [42000]: ORA-00942: table or view does not exist
+Isso ocorre pois USER3 nao tem acesso a  tabela, ja que nao recebeu permissao para acessa-la. */
 
 /* iv. USER1 deve revogar o privilegio de leitura do USER2; */
 
@@ -68,14 +68,15 @@ GRANT SELECT ON A12563800.ESTRELA
 
 /* iii. USER3 deve realizar uma consulta na tabela do USER1 para testar o privilegio; */
 SELECT * FROM a12563800.ESTRELA;
-/* Tudo ok */
+/* Consulta realizada com sucesso */
 
 /* iv. USER1 deve revogar o privilegio de leitura do USER2; */
 
 REVOKE SELECT ON ESTRELA FROM a12623950;
 
 /* v. USER2 e USER3 devem tentar realizar uma consulta na tabela do USER1 para testar; */
-/* Tabela nao existe para os 2.
+/* SQL Error [942] [42000]: ORA-00942: table or view does not exist
+Tabela nao existe para os 2.
 Como o privilegio de leitura foi revogado para o USER2 e o USER3 recebeu acesso pelo USER2,
 ambos perderam o acesso.
 
@@ -131,11 +132,17 @@ Alem disso, nos atributos em que USER2 nao tinha permissao, foi inserido null.
 
 /* c. USER2 deve conceder a USER3 (sem GRANT OPTION) os mesmos privilegios recebidos; */
 GRANT SELECT, INSERT (ID_ESTRELA, NOME, MASSA, X, Y, Z) ON A12563800.ESTRELA
-	TO A10727952;
+    TO A10727952;
+
 /* d. Refaca os testes dos itens a e b agora considerando os tres usuarios. */
+/* O comportamento é semelhante ao analisado anteriormente.
+Antes do commit, apenas o usuário que está fazendo a transação (USER2) consegue ver a inserção.
+Entretanto, após o commit, todos os usuários consegue acessar a tupla inserida 
+*/
+
 /* e. USER1 deve revogar os privilegios do USER2. */
 
-REVOKE SELECT, INSERT ON LIDER FROM a12623950;
+REVOKE SELECT, INSERT ON ESTRELA FROM a12623950;
 
 /* 3. Considere o seguinte cenario: USER2 precisa criar em seu proprio esquema uma tabela nova que armazenara
 curiosidades a respeito de comunidades que estejam cadastradas na tabela Comunidade do USER1. A tabela
@@ -145,7 +152,7 @@ i. a comunidade inserida nessa tabela deve ser uma comunidade cadastrada na tabe
 do USER1;
 ii. todas as comunidades nessa tabela devem obrigatoriamente ter curiosidades armazenadas (mas
 nem todas as comunidades do USER1 precisam estar na tabela de curiosidades do USER2).
-Implemente e teste esse cenÃ¡rio: */
+Implemente e teste esse cenario: */
 
 /* a) conceda os privilegios necessarios; */
 
@@ -217,22 +224,22 @@ create index idx_classificacao_massa
 drop index idx_classificacao_massa;
 
 /* c. faca, em USER2, uma consulta na tabela do USER1 e analise o plano de execucao. */
-select massa from estrela where classificacao = 'M3' and massa < 1;
+select * from A12563800.estrela where classificacao = 'M3' and massa < 1;
 
 -- Plano de Consulta: Consulta 01
 explain plan set statement_id = 'teste1' for
-    select massa from estrela where classificacao = 'M3' and massa < 1;
+    select * from A12563800.estrela where classificacao = 'M3' and massa < 1;
 SELECT plan_table_output
 FROM TABLE(dbms_xplan.display());
 
 /*
 Plan hash value: 1653849300
-
+ 
 -----------------------------------------------------------------------------
 | Id  | Operation         | Name    | Rows  | Bytes | Cost (%CPU)| Time     |
 -----------------------------------------------------------------------------
-|   0 | SELECT STATEMENT  |         |     1 |    16 |    15   (0)| 00:00:01 |
-|*  1 |  TABLE ACCESS FULL| ESTRELA |     1 |    16 |    15   (0)| 00:00:01 |
+|   0 | SELECT STATEMENT  |         |    58 |  2668 |    15   (0)| 00:00:01 |
+|*  1 |  TABLE ACCESS FULL| ESTRELA |    58 |  2668 |    15   (0)| 00:00:01 |
 -----------------------------------------------------------------------------
 
 Como podemos observar o indice criado não foi ultilizado pela consulta, seguindo o que
@@ -241,29 +248,28 @@ ser recuperado e que o otimizador acha mais vantajoso fazer um acesso total.
 */
 
 /* d. faca a mesma consulta em USER1 e analise o plano de execucao. */
-select massa from estrela where classificacao = 'M3' and massa < 1;
+select * from estrela where classificacao = 'M3' and massa < 1;
 
 -- Plano de Consulta: Consulta 01
 explain plan set statement_id = 'teste1' for
-    select massa from estrela where classificacao = 'M3' and massa < 1;
+    select * from A12563800.estrela where classificacao = 'M3' and massa < 1;
 SELECT plan_table_output
 FROM TABLE(dbms_xplan.display());
 
 /*
-Plan hash value: 3833001942
+Plan hash value: 1653849300
  
---------------------------------------------------------------------------------------------
-| Id  | Operation        | Name                    | Rows  | Bytes | Cost (%CPU)| Time     |
---------------------------------------------------------------------------------------------
-|   0 | SELECT STATEMENT |                         |    58 |   928 |     2   (0)| 00:00:01 |
-|*  1 |  INDEX RANGE SCAN| IDX_CLASSIFICACAO_MASSA |    58 |   928 |     2   (0)| 00:00:01 |
---------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+| Id  | Operation         | Name    | Rows  | Bytes | Cost (%CPU)| Time     |
+-----------------------------------------------------------------------------
+|   0 | SELECT STATEMENT  |         |    58 |  2668 |    15   (0)| 00:00:01 |
+|*  1 |  TABLE ACCESS FULL| ESTRELA |    58 |  2668 |    15   (0)| 00:00:01 |
+-----------------------------------------------------------------------------
  
 Predicate Information (identified by operation id):
 ---------------------------------------------------
  
-   1 - access("CLASSIFICACAO"='M3' AND "MASSA"<1)
-
+   1 - filter("CLASSIFICACAO"='M3' AND "MASSA"<1)
 */
 
 
@@ -275,24 +281,24 @@ optimizer.html#GUID-FD82C6F7-C338-41E3-8AE1-F8ADFB882ECF) */
 
 /* f. refaca a consulta em USER2, e analise o plano de consulta. Explique a mudanca. Houve ganho no
 desempenho da consulta? */
-select massa from estrela where classificacao = 'M3' and massa < 1;
+select * from A12563800.estrela where classificacao = 'M3' and massa < 1;
 
 -- Plano de Consulta: Consulta 01
 explain plan set statement_id = 'teste1' for
-    select massa from estrela where classificacao = 'M3' and massa < 1;
+    select * from estrela where classificacao = 'M3' and massa < 1;
 SELECT plan_table_output
 FROM TABLE(dbms_xplan.display());
 
 /*
-Plan hash value: 2236474767
+Plan hash value: 3190089159
  
-------------------------------------------------------------------------------------------------------------
-| Id  | Operation                           | Name                 | Rows  | Bytes | Cost (%CPU)| Time     |
-------------------------------------------------------------------------------------------------------------
-|   0 | SELECT STATEMENT                    |                      |     1 |    16 |    86   (0)| 00:00:01 |
-|*  1 |  TABLE ACCESS BY INDEX ROWID BATCHED| ESTRELA              |     1 |    16 |    86   (0)| 00:00:01 |
-|*  2 |   INDEX RANGE SCAN                  | IDX_CLASSIFICACAO_ID |   125 |       |     2   (0)| 00:00:01 |
-------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------
+| Id  | Operation                           | Name                    | Rows  | Bytes | Cost (%CPU)| Time     |
+---------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                    |                         |    58 |  2668 |    60   (0)| 00:00:01 |
+|   1 |  TABLE ACCESS BY INDEX ROWID BATCHED| ESTRELA                 |    58 |  2668 |    60   (0)| 00:00:01 |
+|*  2 |   INDEX RANGE SCAN                  | IDX_CLASSIFICACAO_MASSA |    58 |       |     2   (0)| 00:00:01 |
+---------------------------------------------------------------------------------------------------------------
 
 Como podemos ver, desta vez foi usado o indice para a consulta, entretando, com relação ao desempenho
 houve queda pois o custo para executar essa consulta aumentou. Logo, podemos concluir que o acesso total
@@ -300,15 +306,29 @@ a tabela, mesmo não usando o indice, ainda assim é mais performatico.
 */
 
 /* g. refaca a consulta em USER1, e analise o plano de consulta. Houve alguma mudanca? Por que? */
-select massa from estrela where classificacao = 'M3' and massa < 1;
+select * from estrela where classificacao = 'M3' and massa < 1;
 
 -- Plano de Consulta: Consulta 01
 explain plan set statement_id = 'teste1' for
-    select massa from estrela where classificacao = 'M3' and massa < 1;
+    select * from estrela where classificacao = 'M3' and massa < 1;
 SELECT plan_table_output
 FROM TABLE(dbms_xplan.display());
-
 /*
+Plan hash value: 1653849300
+ 
+-----------------------------------------------------------------------------
+| Id  | Operation         | Name    | Rows  | Bytes | Cost (%CPU)| Time     |
+-----------------------------------------------------------------------------
+|   0 | SELECT STATEMENT  |         |    58 |  2668 |    15   (0)| 00:00:01 |
+|*  1 |  TABLE ACCESS FULL| ESTRELA |    58 |  2668 |    15   (0)| 00:00:01 |
+-----------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   1 - filter("CLASSIFICACAO"='M3' AND "MASSA"<1)
+   
+Como no USER1 não foi forçado o uso do índice, ele continua realizando table access full
 */
 
 /* 5. Considere entao o seguinte cenario:
@@ -332,13 +352,113 @@ WITH GRANT OPTION;
 GRANT SELECT, INSERT, DELETE, UPDATE ON LIDER TO a12623950
 WITH GRANT OPTION;
 
+-- Criação da view
+CREATE OR REPLACE VIEW VIEW_FACCAO_IDEOLOGIA (FACCAO, LIDER_CPI, LIDER_NOME, IDEOLOGIA) AS
+    SELECT F.NOME, F.LIDER, L.NOME, F.IDEOLOGIA
+    FROM A12563800.FACCAO F JOIN A12563800.LIDER L
+    ON F.LIDER = L.CPI;
+-- View criada com sucesso
+
+-- Dá permissão de leitura ao user3
+GRANT SELECT ON VIEW_FACCAO_IDEOLOGIA TO A10727952;
 
 /* b) Teste as operacoes e permissoes: verifique se USER2 e USER3 conseguem fazer todas as operacoes de
 acesso a visao, conforme especificado no cenario. Teste se USER3 consegue fazer operacoes de escrita
 na visao. Verifique tambem o acesso direto de USER2 e USER3 as tabelas base do USER1. */
+
+-- USER2
+-- verifica acesso as tabelas do USER1
+SELECT * FROM A12563800.FACCAO f;
+SELECT * FROM A12563800.LIDER l;
+/* USER2 tem acesso a ambas as tabelas */
+
+-- verifica leitura
+SELECT FROM VIEW_FACCAO_IDEOLOGIA;
+/* possui permissão de leitura, afinal a view é do proprio USER2 */
+
+-- verifica insert
+-- cria um lider para não ter problemas com FK
+INSERT INTO A12563800.LIDER values('111.111.111-11', 'testLider', 'COMANDANTE', 'Facilis illo.', 'Odio ex in');
+INSERT INTO VIEW_FACCAO_IDEOLOGIA (FACCAO, LIDER_CPI)
+    VALUES('testFac', '111.111.111-11');
+/ Inserção bem sucedida. /
+
+-- verifica update
+UPDATE VIEW_FACCAO_IDEOLOGIA
+    SET LIDER_NOME  = 'testLiderReborn'
+    WHERE LIDER_CPI = '111.111.111-11';
+
+/* Update bem sucedido. */
+
+-- verifica delete
+DELETE FROM VIEW_FACCAO_IDEOLOGIA
+WHERE FACCAO = 'testFac';
+
+DELETE FROM A12563800.LIDER WHERE cpi = '111.111.111-11';
+
+/ delete bem sucedido */
+
+-- USER3
+-- verifica acesso as tabelas do USER1
+SELECT * FROM A12563800.FACCAO f;
+SELECT * FROM A12563800.LIDER l;
+/* 
+USER3 Não tem acesso as tabelas, recebendo o seguinte erro
+SQL Error [942] [42000]: ORA-00942: table or view does not exist
+*/
+
+-- verifica leitura
+SELECT FROM A12623950.VIEW_FACCAO_IDEOLOGIA;
+/* Leitura bem sucedida */
+
+-- verifica insert
+-- cria um lider para não ter problemas com FK
+INSERT INTO A12563800.LIDER values('111.111.111-11', 'testLider', 'COMANDANTE', 'Facilis illo.', 'Odio ex in');
+INSERT INTO A12623950.VIEW_FACCAO_IDEOLOGIA (FACCAO, LIDER_CPI)
+    VALUES('testFac', '111.111.111-11');
+/* 
+Não foi possivel fazer a inserção, nem do lider de teste, afinal o USER3 não tem acesso
+a tabela do USER1, e nem a inserção na propria view, afinal a permissão consedida foi 
+apenas de leitura, recebendo assim o seguinte erro:
+SQL Error [1031] [42000]: ORA-01031: insufficient privileges
+*/
+
+-- verifica update
+UPDATE A12623950.VIEW_FACCAO_IDEOLOGIA
+    SET LIDER_NOME  = 'testUpadate'
+    WHERE LIDER_CPI = '123.543.908-12';
+
+/*
+Não foi possivel fazer o update, pelo mesmo motivo da inserção, não foi consedido 
+privilegio para tal. Assim obtemos o mesmo erro de antes:
+SQL Error [1031] [42000]: ORA-01031: insufficient privileges
+*/
+-- verifica delete
+DELETE FROM A12623950.VIEW_FACCAO_IDEOLOGIA
+WHERE FACCAO = 'Daleks';
+
+/*
+Novamente, permisões insuficientes, não foi possivel fazer o delete, com o mesmo
+erro ja cidado
+SQL Error [1031] [42000]: ORA-01031: insufficient privileges
+*/
 
 /* c) USER1 deve revogar todas as permissoes de acesso a suas tabelas concedidas ao USER2. Teste se
 USER2 e USER3 ainda tem acesso a  visao. */
 
 REVOKE SELECT, INSERT, DELETE, UPDATE ON FACCAO FROM a12623950;
 REVOKE SELECT, INSERT, DELETE, UPDATE ON LIDER FROM a12623950;
+
+-- USER2
+SELECT * FROM VIEW_FACCAO_IDEOLOGIA;
+
+/* Erro retornado:
+SQL Error [4063] [72000]: ORA-04063: view "A12623950.VIEW_FACCAO_IDEOLOGIA" has errors
+*/
+
+-- USER3
+SELECT FROM A12623950.VIEW_FACCAO_IDEOLOGIA;
+
+/* Erro retornado:
+SQL Error [4063] [72000]: ORA-04063: view "A12623950.VIEW_FACCAO_IDEOLOGIA" has errors
+*/

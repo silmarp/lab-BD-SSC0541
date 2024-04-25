@@ -149,14 +149,117 @@ INSERT INTO FEDERACAO
 		'Senhor do tempo',
 		TO_DATE('25/02/4890', 'dd/mm/yyyy'));
 
+/* Insercoes na tabela NACAO */
+INSERT INTO NACAO (NOME, FEDERACAO)
+	VALUES('Imperio Dalek', 'Poder obscuro');
+
+INSERT INTO NACAO (NOME, FEDERACAO)
+	VALUES('Gallyos', 'Senhor do tempo');
+
+INSERT INTO NACAO (NOME, FEDERACAO)
+	VALUES('Gallifrey', 'Senhor do tempo');
+
+
+/* Insercoes na tabela DOMINANCIA */
+INSERT INTO DOMINANCIA
+	VALUES(
+		'Skaro', 'Imperio Dalek',
+		TO_DATE('19/06/0025', 'dd/mm/yyyy'),
+		TO_DATE('05/12/5325', 'dd/mm/yyyy')/*fim da grande guerra do tempo*/
+	);
+
+INSERT INTO DOMINANCIA
+	VALUES(
+		'Gallifrey',
+        'Gallyos',
+		TO_DATE('24/01/0001', 'dd/mm/yyyy'),
+		TO_DATE('05/12/5325', 'dd/mm/yyyy')/*fim da grande guerra do tempo*/
+	);
+
+
+/* Insercoes na tabela LIDER */
+INSERT INTO LIDER
+	VALUES(
+		'408.540.985-55', 'Davros', 'CIENTISTA', 
+		'Imperio Dalek',
+		'Kaleds Extermum'
+	);
+
+INSERT INTO LIDER
+	VALUES(
+		'123.543.908-12', 'Borusa', 'COMANDANTE', /*seu cargo eh presidente o que nao esta nas opcoes*/ 
+		'Gallifrey',
+		'Homo Tempus'
+	);
+
+
+/* Insercoes na tabela FACCAO */
+INSERT INTO FACCAO (NOME, LIDER, IDEOLOGIA)
+	VALUES(
+		'Senhor do tempo',
+		'123.543.908-12',
+		'PROGRESSITA'
+	);
+
+INSERT INTO FACCAO 
+	VALUES(
+		'Daleks',
+		'408.540.985-55',
+		'TOTALITARIA',
+		2
+	);
+
+/* Insercoes na tabela NACAO_FACCAO */
+INSERT INTO NACAO_FACCAO 
+	VALUES(
+        'Gallyos',
+        'Senhor do tempo'
+	);
+
+INSERT INTO NACAO_FACCAO 
+	VALUES(
+        'Gallifrey',
+        'Senhor do tempo'
+	);
+
+
+INSERT INTO NACAO_FACCAO 
+	VALUES(
+        'Imperio Dalek',
+		'Daleks'
+	);
+
+/* Insercoes na tabela PARTICIPA */
+INSERT INTO PARTICIPA
+	VALUES(
+		'Daleks',
+		'Kaleds Extermum',
+        'Kaledon'
+	);
+
+INSERT INTO PARTICIPA
+	VALUES(
+		'Senhor do tempo',
+		'Kaleds Extermum',
+        'Kaledon'
+	);
+
+INSERT INTO PARTICIPA
+	VALUES(
+		'Senhor do tempo',
+		'Homo Tempus',
+        'Arcadia'
+	);
+
+
 SELECT C.NOME, C.ESPECIE FROM COMUNIDADE C; 
 
 SELECT C.NOME, C.ESPECIE, H.PLANETA
 FROM COMUNIDADE C JOIN HABITACAO H ON C.NOME = H.COMUNIDADE AND C.ESPECIE = H.ESPECIE
-WHERE PLANETA = '';
+WHERE PLANETA = 'Skaro';
 
 SELECT NF.NACAO, NF.FACCAO, N.QTD_PLANETAS, D.PLANETA
 FROM FACCAO F JOIN NACAO_FACCAO NF ON NF_FACCAO = F.NOME
 JOIN NACAO N ON NF_NACAO = N.NOME
 JOIN DOMINANCIA D ON N.NOME = D.NACAO 
-WHERE NF.FACCAO = 'Desrunt vere';
+WHERE NF.FACCAO = 'Senhor do tempo';

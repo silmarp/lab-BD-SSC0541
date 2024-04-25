@@ -1,3 +1,10 @@
+/*
+SCC0541 - Laboratorio de Base de Dados
+Pratica 08 - PL/SQL – Registros e Coleções - Tipos Armazenados
+Moniely Silva Barboza - 12563800
+Silmar Pereira da Silva Junior - 12623950
+*/
+
 INSERT INTO ESTRELA 
 	VALUES ('GA1', 'Estrela principal', 'Gigante branca', 10.5, -3.03, 1.38, 4.94);
 
@@ -250,16 +257,3 @@ INSERT INTO PARTICIPA
 		'Homo Tempus',
         'Arcadia'
 	);
-
-
-SELECT C.NOME, C.ESPECIE FROM COMUNIDADE C; 
-
-SELECT C.NOME, C.ESPECIE, H.PLANETA
-FROM COMUNIDADE C JOIN HABITACAO H ON C.NOME = H.COMUNIDADE AND C.ESPECIE = H.ESPECIE
-WHERE PLANETA = 'Skaro';
-
-SELECT NF.NACAO, NF.FACCAO, N.QTD_PLANETAS, D.PLANETA
-FROM FACCAO F JOIN NACAO_FACCAO NF ON NF_FACCAO = F.NOME
-JOIN NACAO N ON NF_NACAO = N.NOME
-JOIN DOMINANCIA D ON N.NOME = D.NACAO 
-WHERE NF.FACCAO = 'Senhor do tempo';

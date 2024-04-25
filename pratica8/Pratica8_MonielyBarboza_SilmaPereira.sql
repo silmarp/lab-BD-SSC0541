@@ -257,3 +257,51 @@ INSERT INTO PARTICIPA
 		'Homo Tempus',
         'Arcadia'
 	);
+
+
+-- PL/SQL
+-- questão 1
+DECLARE 
+	v_input_faccao VARCHAR(15);
+	
+	TYPE t_comunidade IS RECORD (
+		nome COMUNIDADE.NOME%TYPE,
+		especie COMUNIDADE.ESPECIE%TYPE
+	);
+	TYPE t_comunidades IS TABLE OF t_comunidade;
+	
+	v_comunidade t_comunidades := t_comunidades();
+
+BEGIN 
+	v_input_faccao := 'Daleks';
+
+
+
+	FOR planeta IN (
+		SELECT d.PLANETA 
+			FROM FACCAO fac JOIN  NACAO_FACCAO nf on nf.FACCAO = fac.NOME 
+			JOIN NACAO n ON nf.NACAO = n.NOME 
+			JOIN DOMINANCIA d ON n.NOME = d.NACAO WHERE nf.FACCAO = v_input_faccao
+	)
+	LOOP
+		dbms_output.put_line('-----');
+		dbms_output.put_line('Dominated planet is: ' || planeta.planeta);	
+	
+		FOR com IN (
+			SELECT * FROM 
+				(SELECT c.ESPECIE, c.NOME 
+					FROM COMUNIDADE c JOIN HABITACAO h ON c.NOME = h.COMUNIDADE AND c.ESPECIE = h.ESPECIE 
+						WHERE planeta = planeta.planeta) 
+				MINUS 
+				(SELECT c.ESPECIE, c.NOME  
+					FROM COMUNIDADE c JOIN PARTICIPA p on c.NOME = p.COMUNIDADE AND c.ESPECIE = p.ESPECIE 
+					WHERE p.FACCAO = v_input_faccao)
+		)
+		LOOP 
+			dbms_output.put_line('Community is: ' || com.nome);
+		END LOOP;
+		
+	END LOOP;
+	
+		dbms_output.put_line('Hello world!!!');	
+END;

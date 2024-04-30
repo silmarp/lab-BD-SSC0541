@@ -1,16 +1,16 @@
 /*
-SCC0541 - Laboratório de Base de Dados
-Prática 07 - PL/SQL
+SCC0541 - LaboratÃ³rio de Base de Dados
+PrÃ¡tica 07 - PL/SQL
 Moniely Silva Barboza - 12563800
 Silmar Pereira da Silva Junior - 12623950
 */
 
 /*
 1. Implemente um programa PL/SQL que selecione e imprima nome e id das estrelas que possuem o
-maior número de estrelas em sua órbita (pode haver mais de uma estrela com o mesmo “maior
-número” de estrelas orbitantes). Imprima também o valor desse “maior número”.
-OBS: use cursor explícito, e procure maximizar o que é feito na consulta associada ao cursor e
-minimizar o que é feito em processamento PL.
+maior nÃºmero de estrelas em sua Ã³rbita (pode haver mais de uma estrela com o mesmo â€œmaior
+nÃºmeroâ€� de estrelas orbitantes). Imprima tambÃ©m o valor desse â€œmaior nÃºmeroâ€�.
+OBS: use cursor explÃ­cito, e procure maximizar o que Ã© feito na consulta associada ao cursor e
+minimizar o que Ã© feito em processamento PL.
 */
 
 DECLARE
@@ -26,7 +26,7 @@ BEGIN
 	
 	IF NOT c_mais_orbitados%FOUND THEN RAISE NO_DATA_FOUND; END if;
 
-	dbms_output.put_line('Quantidade maxima de orbitantes Ã©: ' || v_mais_orbitados.QTD);	
+	dbms_output.put_line('Quantidade maxima de orbitantes ÃƒÂ©: ' || v_mais_orbitados.QTD);	
 	dbms_output.put_line('Estrela id: ' || v_mais_orbitados.ID_ESTRELA
 		|| ';  Estrela Nome: ' || v_mais_orbitados.NOME);
 
@@ -41,13 +41,13 @@ BEGIN
 
 	EXCEPTION
 		WHEN NO_DATA_FOUND THEN  
-			dbms_output.put_line('NÃ£o foram encontrados registros de orbita');
+			dbms_output.put_line('NÃƒÂ£o foram encontrados registros de orbita');
 END;
 
 /*
-2. Implemente um programa PL/SQL que remova da base de dados todas as federações que não
-possuem nenhuma nação associada. Imprima a quantidade de federações removidas.
-OBS: use cursor implícito. Faça a remoção usando um único comando DELETE.
+2. Implemente um programa PL/SQL que remova da base de dados todas as federaÃ§Ãµes que nÃ£o
+possuem nenhuma naÃ§Ã£o associada. Imprima a quantidade de federaÃ§Ãµes removidas.
+OBS: use cursor implÃ­cito. FaÃ§a a remoÃ§Ã£o usando um Ãºnico comando DELETE.
 */
 
 /* Insercoes na tabela FEDERACAO */
@@ -70,19 +70,19 @@ BEGIN
     COMMIT;
     EXCEPTION
         WHEN NO_DATA_FOUND
-            THEN dbms_output.put_line('Todas as federaÃ§Ãµes estÃ£o associadas');
+            THEN dbms_output.put_line('Todas as federaÃƒÂ§ÃƒÂµes estÃƒÂ£o associadas');
 END;
 
 /*
-3. Implemente um programa PL/SQL que, dado um planeta e uma comunidade (entradas de usuário),
-inclua a comunidade como habitante do planeta por um período de:
-• 100 anos a partir da data atual se a comunidade possuir 1000 habitantes ou menos;
-• 50 anos a partir da data atual se a comunidade possuir mais de 1000 habitantes;
-Imprima as informações referentes à espécie da comunidade (nome, planeta de origem e se é
-inteligente ou não), e o período (datas) de habitação cadastrado.
+3. Implemente um programa PL/SQL que, dado um planeta e uma comunidade (entradas de usuÃ¡rio),
+inclua a comunidade como habitante do planeta por um perÃ­odo de:
+â€¢ 100 anos a partir da data atual se a comunidade possuir 1000 habitantes ou menos;
+â€¢ 50 anos a partir da data atual se a comunidade possuir mais de 1000 habitantes;
+Imprima as informaÃ§Ãµes referentes Ã  espÃ©cie da comunidade (nome, planeta de origem e se Ã©
+inteligente ou nÃ£o), e o perÃ­odo (datas) de habitaÃ§Ã£o cadastrado.
 */
 
--- TODO impresÃ£o das ultimas informaÃ§Ãµes
+-- TODO impresÃƒÂ£o das ultimas informaÃƒÂ§ÃƒÂµes
 DECLARE
 	v_planeta PLANETA.ID_ASTRO%TYPE;
 	v_comunidade COMUNIDADE.NOME%TYPE;
@@ -101,10 +101,10 @@ BEGIN
 		FROM COMUNIDADE c WHERE c.NOME = v_comunidade AND c.ESPECIE = v_especie;
 	
 	IF v_habitantes > 1000 then
-			-- habitaÃ§Ã£o de 50 anos
+			-- habitaÃƒÂ§ÃƒÂ£o de 50 anos
 			INSERT INTO HABITACAO values(v_planeta, v_especie, v_comunidade, current_date, add_months(current_date, 600));
 		ELSE
-			-- habitaÃ§Ã£o de 100 anos
+			-- habitaÃƒÂ§ÃƒÂ£o de 100 anos
 			INSERT INTO HABITACAO values(v_planeta, v_especie, v_comunidade, current_date, add_months(current_date, 1200));
 	end IF;
 
@@ -112,44 +112,29 @@ BEGIN
 
 	EXCEPTION
 		WHEN NO_DATA_FOUND THEN  
-			dbms_output.put_line('NÃ£o foi possivel encotrar a comunidade');
+			dbms_output.put_line('NÃƒÂ£o foi possivel encotrar a comunidade');
 		WHEN e_planeta_invalido THEN
-			dbms_output.put_line('O planeta ' || v_planeta || ' Ã© invalido e/ou nÃ£o existe');
+			dbms_output.put_line('O planeta ' || v_planeta || ' ÃƒÂ© invalido e/ou nÃƒÂ£o existe');
 		WHEN OTHERS  
        		THEN dbms_output.put_line('Erro nro:  ' || SQLCODE  
                             || '. Mensagem: ' || SQLERRM );
 END;
 
 /*
-4. Implemente um programa PL/SQL que, dada uma classificação de estrela (entrada de usuário), e
-considerando todas as estrelas dessa classificação que sejam orbitadas por planetas, remova o
-planeta da órbita da estrela se a distância mínima entre eles for superior a um valor também
-fornecido como entrada de usuário. Imprima o número total de órbitas removidas.
+4. Implemente um programa PL/SQL que, dada uma classificaÃ§Ã£o de estrela (entrada de usuÃ¡rio), e
+considerando todas as estrelas dessa classificaÃ§Ã£o que sejam orbitadas por planetas, remova o
+planeta da Ã³rbita da estrela se a distÃ¢ncia mÃ­nima entre eles for superior a um valor tambÃ©m
+fornecido como entrada de usuÃ¡rio. Imprima o nÃºmero total de Ã³rbitas removidas.
 OBS: use cursor explicito com SELECT ... FOR UPDATE.
 */
-INSERT INTO ORBITA_PLANETA 
-	VALUES ('Skaro', 'GJ 4273', 110.711, 162.421, 250.368);
-
-INSERT INTO ORBITA_PLANETA 
-	VALUES ('Skaro', 'Gl 203', 210.711, 371.421, 250.368);
-
-INSERT INTO ORBITA_PLANETA 
-	VALUES ('Skaro', 'GJ 4019B', 157.711, 193.421, 250.368);
-
-DELETE FROM ORBITA_PLANETA WHERE ESTRELA = 'GJ 4273';
-DELETE FROM ORBITA_PLANETA WHERE ESTRELA = 'Gl 203';
-DELETE FROM ORBITA_PLANETA WHERE ESTRELA = 'GJ 4019B';
-
-SELECT * FROM ESTRELA E WHERE E.CLASSIFICACAO = 'M5';
-
-SELECT OP.ESTRELA, OP.PLANETA, OP.DIST_MIN
-FROM ESTRELA E JOIN ORBITA_PLANETA OP
-ON E.ID_ESTRELA = OP.ESTRELA
-WHERE E.CLASSIFICACAO = 'M5';
+INSERT INTO ORBITA_PLANETA VALUES ('Skaro', 'GJ 4273', 110.711, 162.421, 250.368);
+INSERT INTO ORBITA_PLANETA VALUES ('Skaro', 'Gl 203', 210.711, 371.421, 250.368);
+INSERT INTO ORBITA_PLANETA VALUES ('Skaro', 'GJ 4019B', 157.711, 193.421, 250.368);
 
 DECLARE 
     v_classificacao ESTRELA.CLASSIFICACAO%TYPE;
     v_dist_min ORBITA_PLANETA.DIST_MIN%TYPE;
+    v_deletados INTEGER;
     
     CURSOR C_ORBITA_PLANETA IS 
         SELECT OP.ESTRELA, OP.PLANETA, E.CLASSIFICACAO, OP.DIST_MIN
@@ -161,7 +146,8 @@ DECLARE
     
 BEGIN
     v_classificacao := 'M5';
-    v_dist_min := 200;
+    v_dist_min := 100;
+    v_deletados := 0;
     OPEN c_orbita_planeta;
     
     LOOP
@@ -169,14 +155,20 @@ BEGIN
         EXIT WHEN c_orbita_planeta%NOTFOUND;
         IF v_resultado.classificacao = v_classificacao AND v_resultado.dist_min > v_dist_min
             THEN DELETE FROM ORBITA_PLANETA WHERE CURRENT OF c_orbita_planeta;
+                v_deletados := v_deletados + 1;
+            END IF;
+        END LOOP;
+        IF v_deletados = 0
+           THEN RAISE NO_DATA_FOUND;
+        ELSE dbms_output.put_line(v_deletados || ' orbitas removidas');
         END IF;
-    END LOOP;
-    dbms_output.put_line(SQL%ROWCOUNT || 'orbitas removidas');
-
-    CLOSE c_orbita_planeta;
-    COMMIT;
     
-    EXCEPTION
-        WHEN NO_DATA_FOUND THEN
-            dbms_output.put_line('Nenhuma órbita foi excluída');
-END;    
+        CLOSE c_orbita_planeta;
+        COMMIT;
+        
+        EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                dbms_output.put_line('Nenhuma órbita com estrelas da classificacao ' || v_classificacao
+                    || ' e distância mínima maior que ' || v_dist_min
+                    || ' foi encontrada');
+    END;    

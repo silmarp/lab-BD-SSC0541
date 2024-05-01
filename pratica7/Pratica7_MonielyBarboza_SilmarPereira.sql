@@ -82,39 +82,60 @@ Imprima as informacoes referentes a especie da comunidade (nome, planeta de orig
 inteligente ou nao), e o periodo (datas) de habitacao cadastrado.
 */
 
--- TODO impresÃƒÆ’Ã‚Â£o das ultimas informaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes
 DECLARE
 	v_planeta PLANETA.ID_ASTRO%TYPE;
 	v_comunidade COMUNIDADE.NOME%TYPE;
 	v_especie COMUNIDADE.ESPECIE%TYPE;
 	v_habitantes COMUNIDADE.QTD_HABITANTES%TYPE;
+	
+	v_intel ESPECIE.INTELIGENTE%TYPE;
+	v_origem ESPECIE.PLANETA_OR%TYPE;
+
+	v_date DATE;
+	v_date_end DATE;
 
 	e_planeta_invalido EXCEPTION;
 	pragma EXCEPTION_INIT(e_planeta_invalido, -2291);
 BEGIN
-    -- entradas do usuario
+	--input planeta
 	v_planeta := 'Laborum nihil.';
+	--input comunidade
 	v_comunidade := 'Thals';
 	v_especie := 'Kaleds Extermum';
+
+	-- data atual
+	v_date := current_date;
 
 	SELECT QTD_HABITANTES INTO v_habitantes 
 		FROM COMUNIDADE c WHERE c.NOME = v_comunidade AND c.ESPECIE = v_especie;
 	
 	IF v_habitantes > 1000 then
-			-- habitaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o de 50 anos
-			INSERT INTO HABITACAO values(v_planeta, v_especie, v_comunidade, current_date, add_months(current_date, 600));
+			-- habitação de 50 anos
+			v_date_end := add_months(v_date, 600);
+			INSERT INTO HABITACAO values(v_planeta, v_especie, v_comunidade, v_date, v_date_end);
 		ELSE
-			-- habitaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o de 100 anos
-			INSERT INTO HABITACAO values(v_planeta, v_especie, v_comunidade, current_date, add_months(current_date, 1200));
+			-- habitação de 100 anos
+			v_date_end := add_months(v_date, 1200);
+			INSERT INTO HABITACAO values(v_planeta, v_especie, v_comunidade, v_date, v_date_end);
 	end IF;
 
 	COMMIT;
 
+	SELECT e.INTELIGENTE, e.PLANETA_OR INTO v_intel, v_origem
+		FROM ESPECIE e WHERE e.NOME = v_especie;
+	
+	dbms_output.put_line('Especie: ' || v_especie ||
+	' de origem no planeta: ' || v_origem ||
+	', presença de inteligencia: ' || v_intel ||
+	' teve habitação cadastrada com inicio em: ' || TO_CHAR(v_date, 'DD-MM-YYYY') || 
+	' e fim em: ' || TO_CHAR(v_date_end, 'DD-MM-YYYY'));	
+	
+
 	EXCEPTION
 		WHEN NO_DATA_FOUND THEN  
-			dbms_output.put_line('NÃƒÆ’Ã‚Â£o foi possivel encotrar a comunidade');
+			dbms_output.put_line('Não foi possivel encotrar a comunidade');
 		WHEN e_planeta_invalido THEN
-			dbms_output.put_line('O planeta ' || v_planeta || ' ÃƒÆ’Ã‚Â© invalido e/ou nÃƒÆ’Ã‚Â£o existe');
+			dbms_output.put_line('O planeta ' || v_planeta || ' é invalido e/ou não existe');
 		WHEN OTHERS  
        		THEN dbms_output.put_line('Erro nro:  ' || SQLCODE  
                             || '. Mensagem: ' || SQLERRM );

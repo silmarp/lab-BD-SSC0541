@@ -99,6 +99,8 @@ coleção ou percorrer a coleção com FOR LOOP para realizar as inserções.
 
 DECLARE 
 	v_input_faccao VARCHAR(15);
+
+	v_acumulador NUMBER;
 	
 	TYPE t_comunidade IS RECORD (
 		nome COMUNIDADE.NOME%TYPE,
@@ -106,40 +108,58 @@ DECLARE
 	);
 	TYPE t_comunidades IS TABLE OF t_comunidade;
 	
-	v_comunidade t_comunidades := t_comunidades();
+	v_comunidades t_comunidades := t_comunidades();
 
 BEGIN 
 	v_input_faccao := 'Daleks';
 
+	v_acumulador := 1;
 
-
-	FOR planeta IN (
-		SELECT d.PLANETA 
-			FROM FACCAO fac JOIN  NACAO_FACCAO nf on nf.FACCAO = fac.NOME 
-			JOIN NACAO n ON nf.NACAO = n.NOME 
-			JOIN DOMINANCIA d ON n.NOME = d.NACAO WHERE nf.FACCAO = v_input_faccao
+	FOR comunidade IN (
+		SELECT * FROM 
+		(
+			-- Seleciona comunidades que estão em planetas de uma determinada faccao 
+			SELECT c.ESPECIE, c.NOME FROM COMUNIDADE c JOIN HABITACAO h ON c.NOME = h.COMUNIDADE AND c.ESPECIE = h.ESPECIE WHERE planeta IN (
+				SELECT d.PLANETA 
+					FROM FACCAO fac JOIN  NACAO_FACCAO nf on nf.FACCAO = fac.NOME 
+					JOIN NACAO n ON nf.NACAO = n.NOME 
+					JOIN DOMINANCIA d ON n.NOME = d.NACAO WHERE nf.FACCAO = v_input_faccao)
+		) 
+		MINUS 
+		(
+			-- seleciona as comunidades que participam da faccao
+			SELECT c.ESPECIE, c.NOME  FROM 
+				COMUNIDADE c JOIN PARTICIPA p on c.NOME = p.COMUNIDADE AND c.ESPECIE = p.ESPECIE 
+				WHERE p.FACCAO = v_input_faccao
+		)
 	)
 	LOOP
-		dbms_output.put_line('-----');
-		dbms_output.put_line('Dominated planet is: ' || planeta.planeta);	
-	
-		FOR com IN (
-			SELECT * FROM 
-				(SELECT c.ESPECIE, c.NOME 
-					FROM COMUNIDADE c JOIN HABITACAO h ON c.NOME = h.COMUNIDADE AND c.ESPECIE = h.ESPECIE 
-						WHERE planeta = planeta.planeta) 
-				MINUS 
-				(SELECT c.ESPECIE, c.NOME  
-					FROM COMUNIDADE c JOIN PARTICIPA p on c.NOME = p.COMUNIDADE AND c.ESPECIE = p.ESPECIE 
-					WHERE p.FACCAO = v_input_faccao)
-		)
-		LOOP 
-			dbms_output.put_line('Community is: ' || com.nome);
-		END LOOP;
+		v_comunidades.extend(1);
 		
-	END LOOP;
+		v_comunidades(v_acumulador).nome := comunidade.nome;
+		v_comunidades(v_acumulador).especie := comunidade.especie;
+		
+		dbms_output.put_line('Comunidade '|| v_comunidades(v_acumulador).nome || ' adicionada a facção');
 	
-		dbms_output.put_line('Hello world!!!');	
+		v_acumulador := v_acumulador + 1;
+	END LOOP;
+
+	IF v_comunidades IS EMPTY THEN
+		RAISE NO_DATA_FOUND;
+	END IF;
+	
+	FORALL i IN indices of v_comunidades
+		INSERT INTO PARTICIPA VALUES (v_input_faccao, v_comunidades(i).especie, v_comunidades(i).nome);
+	
+	COMMIT;
+	
+	-- No caso do ex1, como é bem conciso, a exception que pode acontecer é a NO_DATA_FOUND
+	EXCEPTION
+        WHEN NO_DATA_FOUND
+            THEN dbms_output.put_line('Não foram encontradas comunidades');
+        WHEN OTHERS  
+       		THEN dbms_output.put_line('Erro nro:  ' || SQLCODE  
+                            || '. Mensagem: ' || SQLERRM );
 END;
 
 /* 2) Implemente um programa PL/SQL que selecione e imprima, para cada planeta, informações

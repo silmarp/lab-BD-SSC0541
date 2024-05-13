@@ -88,6 +88,62 @@ Estrela nao encontrada
 */
 
 
+/*2) 
+Implemente! a! seguinte! funcionalidade! relacionada! ao! usuário! Líder) de) Facção! do! Sistema!
+Sociedade!Galática!(ver!descrição!do!projeto!final):
+a. Gerenciamento:!!item!1.b!!(Remover'facção'de'Nação)
+*/
+CREATE OR REPLACE PACKAGE faccaoManager AS 
+	-- Pacote para o item 1 das funcionalidades de gerenciamento
+	e_notLider EXCEPTION;
+
+	FUNCTION isLider (p_faccao FACCAO.NOME%TYPE, p_lider LIDER.CPI%TYPE) RETURN char;
+
+	PROCEDURE remove_fac_nac (
+		p_faccao FACCAO.NOME%TYPE,
+		p_nacao NACAO.NOME%TYPE,
+		p_lider LIDER.CPI%TYPE
+	);
+END faccaoManager;
+
+/
+
+CREATE OR REPLACE PACKAGE BODY faccaoManager AS
+
+	PROCEDURE remove_fac_nac (
+		p_faccao FACCAO.NOME%TYPE,
+		p_nacao NACAO.NOME%TYPE,
+		p_lider LIDER.CPI%TYPE
+	) IS
+	v_isLider char;
+	BEGIN
+		v_isLider := isLider(p_faccao, p_lider);
+		
+		IF v_isLider = 'F' THEN
+			raise e_notLider;
+		END IF;
+		
+		DELETE FROM NACAO_FACCAO nf WHERE nf.NACAO = p_nacao AND nf.FACCAO = p_faccao;
+	END remove_fac_nac;
+
+	--
+
+	FUNCTION isLider (p_faccao FACCAO.NOME%TYPE, p_lider LIDER.CPI%TYPE) RETURN char is
+		v_isLider char;
+		v_count NUMBER;
+	BEGIN
+		SELECT count(*) INTO v_count FROM FACCAO f WHERE f.nome = p_faccao AND  f.LIDER = p_lider;
+		v_isLider := 'F';
+		
+		IF v_count > 0 THEN
+			v_isLider := 'V';
+		END IF;
+		
+		RETURN v_isLider;
+	END isLider;
+
+END faccaoManager;
+
 /* 3) Implemente a seguinte funcionalidade relacionada ao usuário Comandante do Sistema
 Sociedade Galática (ver descrição do projeto final):
 a. Gerenciamento: item 3.a.ii (Criar nova federação, com a própria nação)

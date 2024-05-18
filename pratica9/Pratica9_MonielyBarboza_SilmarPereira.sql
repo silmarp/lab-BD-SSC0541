@@ -1,16 +1,17 @@
 /*
 SCC0541 - Laboratorio de Base de Dados
-Pratica 09 - PL/SQL – Procedimentos, Funcoes e Pacotes
+Pratica 09 - PL/SQL - Procedimentos, Funcoes e Pacotes
 Moniely Silva Barboza - 12563800
 Silmar Pereira da Silva Junior - 12623950
 */
 
 set serveroutput on;
 
-/* 1) Implemente uma função que calcule a distância entre duas estrelas (pode ser distância
-Euclididana). */
+/* 1) Implemente uma funcao que calcule a distancia entre duas estrelas (pode ser distancia
+Euclididana).
+*/
 
-/* Será utilizada a distancia euclidiana dada por:
+/* Sera utilizada a distancia euclidiana dada por:
 distancia = sqrt ( (X2 - X1)^2 + (Y2 - Y1)^2 + (Z2 - Z1)^2 )
 */
 
@@ -44,13 +45,11 @@ BEGIN
         FETCH c_estrelas INTO v_estrelas(i).coord_X, v_estrelas(i).coord_Y, v_estrelas(i).coord_Z;
         IF c_estrelas%NOTFOUND THEN RAISE NO_DATA_FOUND; END IF;
     END LOOP;
-    
     CLOSE c_estrelas;
     
     v_diferenca_X := v_estrelas(2).coord_X - v_estrelas(1).coord_X;
     v_diferenca_Y := v_estrelas(2).coord_Y - v_estrelas(1).coord_Y;
     v_diferenca_Z := v_estrelas(2).coord_Z - v_estrelas(1).coord_Z;
-    
     v_distancia := sqrt( (v_diferenca_X)**2 + (v_diferenca_Y)**2 + (v_diferenca_Z)**2 );
 
 RETURN v_distancia;
@@ -60,6 +59,23 @@ EXCEPTION
         
 END calcula_distancia;
 
+-- TESTES
+-- Caso 1: Todos os dados validos
+DECLARE
+    v_estrela1 Estrela.Id_estrela%TYPE;
+    v_estrela2 Estrela.Id_estrela%TYPE;
+    v_distancia NUMBER;
+BEGIN
+    v_estrela1 := 'Alp Oct';
+    v_estrela2 := '29Pi  And';
+    v_distancia := calcula_distancia(v_estrela1, v_estrela2);
+    dbms_output.put_line('A distancia entre as estrelas "' || v_estrela1 || '" e "' || v_estrela2 || '" eh ' || v_distancia);
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        dbms_output.put_line('Estrela nao encontrada');
+END;
+
+-- Caso 2: Estrela inexistente
 DECLARE
     v_estrela1 Estrela.Id_estrela%TYPE;
     v_estrela2 Estrela.Id_estrela%TYPE;
@@ -67,32 +83,22 @@ DECLARE
     
 BEGIN
     v_estrela1 := 'Alp Oct';
-    v_estrela2 := '29Pi  And';
+    v_estrela2 := 'Teste';
     v_distancia := calcula_distancia(v_estrela1, v_estrela2);
     
-    dbms_output.put_line('A distancia entre as estrelas "' || v_estrela1 || '" e "' || v_estrela2 || '" é ' || v_distancia);
+    dbms_output.put_line('A distancia entre as estrelas "' || v_estrela1 || '" e "' || v_estrela2 || '" eh ' || v_distancia);
     
     EXCEPTION
         WHEN NO_DATA_FOUND THEN
             dbms_output.put_line('Estrela nao encontrada');
 END;
 
-/* Resultado:
-    v_estrela1 := 'Alp Oct';
-    v_estrela2 := '29Pi  And';
-A distancia entre as estrelas "Alp Oct" e "29Pi  And" é 205,938950049332855677777975828942337846
 
-    v_estrela1 := 'Teste';
-    v_estrela2 := '29Pi  And';
-Estrela nao encontrada
+/* 2) Implemente a seguinte funcionalidade relacionada ao usuario Lider de Faccao do Sistema
+Sociedade Galatica (ver descricao do projeto final):
+a. Gerenciamento: item 1.b (Remover faccao de Nacao)
 */
 
-
-/*2) 
-Implemente! a! seguinte! funcionalidade! relacionada! ao! usuário! Líder) de) Facção! do! Sistema!
-Sociedade!Galática!(ver!descrição!do!projeto!final):
-a. Gerenciamento:!!item!1.b!!(Remover'facção'de'Nação)
-*/
 CREATE OR REPLACE PACKAGE faccaoManager AS 
 	-- Pacote para o item 1 das funcionalidades de gerenciamento
 	e_notLider EXCEPTION;
@@ -144,77 +150,144 @@ CREATE OR REPLACE PACKAGE BODY faccaoManager AS
 
 END faccaoManager;
 
-/* 3) Implemente a seguinte funcionalidade relacionada ao usuário Comandante do Sistema
-Sociedade Galática (ver descrição do projeto final):
-a. Gerenciamento: item 3.a.ii (Criar nova federação, com a própria nação)
-*/
-
-/*
-Comandante é de uma nacao
-Ele vai inserir uma nova federacao
-Essa nova federacao passa a ser e federacao da nacao
-Sea nacao já tem federacao, update
-Senão insert
+/* 3) Implemente a seguinte funcionalidade relacionada ao usuario Comandante do Sistema
+Sociedade Galatica (ver descricao do projeto final):
+a. Gerenciamento: item 3.a.ii (Criar nova federacao, com a propria nacao)
 */
 
 CREATE OR REPLACE PACKAGE PacoteComandante AS
-    PROCEDURE insere_federacao (
-        p_nacao Nacao.Nome%TYPE,
-        p_federacao Federacao.Nome%TYPE,
-        p_data_fundacao Federacao.Data_fund%TYPE DEFAULT TO_DATE(SYSDATE, 'dd/mm/yyyy')
+	e_notComandante EXCEPTION;
+    e_atrib_notnull EXCEPTION;
+    PRAGMA EXCEPTION_INIT(e_atrib_notnull, -01400);
+    PRAGMA EXCEPTION_INIT(e_notComandante, +100);
+
+    FUNCTION isComandante (p_lider Lider.CPI%TYPE) RETURN Lider%ROWTYPE;
+        
+    PROCEDURE insertFederacao (
+        p_lider Lider.CPI%TYPE,
+        p_federacao_nome Federacao.Nome%TYPE,
+        p_federacao_dt_fund Federacao.DATA_FUND%TYPE DEFAULT TO_DATE(SYSDATE, 'dd/mm/yyyy')
     );
 END PacoteComandante;
 
-CREATE OR REPLACE PACKAGE BODY PacoteComandante AS 
-    PROCEDURE insere_federacao (
-        p_nacao Nacao.Nome%TYPE,
-        p_federacao Federacao.Nome%TYPE,
-        p_data_fundacao Federacao.Data_fund%TYPE DEFAULT TO_DATE(SYSDATE, 'dd/mm/yyyy')
-    ) IS
-        
-        CURSOR c_federacao IS SELECT * FROM FEDERACAO F WHERE F.NOME = p_federacao;
-        v_federacao Federacao%ROWTYPE;
-         
-        BEGIN
-            OPEN c_federacao;
-            IF c_federacao%FOUND THEN
-                UPDATE NACAO SET FEDERACAO = p_federacao WHERE NOME = p_nacao;
-            ELSE   
-                INSERT INTO FEDERACAO VALUES (p_federacao, p_data_fundacao);
-                UPDATE NACAO SET FEDERACAO = p_federacao WHERE NOME = p_nacao;                
+/
+
+CREATE OR REPLACE PACKAGE BODY PacoteComandante AS
+
+    FUNCTION isComandante (
+        p_lider Lider.CPI%TYPE
+    ) RETURN Lider%ROWTYPE IS
+        v_lider Lider%ROWTYPE;
+        BEGIN 
+            v_lider := NULL;
+            SELECT * INTO v_lider FROM Lider L WHERE L.CPI = p_lider AND L.CARGO = 'COMANDANTE';
+            IF SQL%NOTFOUND THEN RAISE e_notComandante;
             END IF;
-    END insere_federacao;
+            dbms_output.put_line('LIDER: ' || v_lider.CPI || ', Nome: ' || v_lider.NOME || ', Cargo: ' || v_lider.CARGO || ', Nacao: ' || v_lider.NACAO || ', Especie: ' || v_lider.ESPECIE);
+        RETURN v_lider;  
+        EXCEPTION
+            WHEN PacoteComandante.e_notComandante THEN
+                dbms_output.put_line('CPI informado nao corresponde a um comandante');
+    END isComandante;
+    
+    PROCEDURE insertFederacao (
+        p_lider Lider.CPI%TYPE,
+        p_federacao_nome Federacao.Nome%TYPE,
+        p_federacao_dt_fund Federacao.DATA_FUND%TYPE DEFAULT TO_DATE(SYSDATE, 'dd/mm/yyyy')
+    ) IS
+        v_lider Lider%ROWTYPE;
+        v_federacao Federacao%ROWTYPE;
+        v_nacao Nacao%ROWTYPE;
+        BEGIN
+            v_lider := isComandante(p_lider);    
+            INSERT INTO FEDERACAO VALUES (p_federacao_nome, p_federacao_dt_fund);
+            UPDATE NACAO N SET FEDERACAO = p_federacao_nome WHERE N.NOME = v_lider.nacao;
+
+            SELECT * INTO v_federacao FROM FEDERACAO F WHERE F.NOME = p_federacao_nome;
+            SELECT * INTO v_nacao FROM NACAO N WHERE N.NOME = v_lider.nacao;
+            dbms_output.put_line('FEDERACAO: ' || v_federacao.nome || ', Data_Fund: ' || v_federacao.data_fund);
+            dbms_output.put_line('NACAO: ' || v_nacao.nome || ', Qtd_planetas: ' || v_nacao.qtd_planetas || ', Federacao: ' || v_nacao.federacao);
+        EXCEPTION
+            WHEN e_atrib_notnull THEN
+                dbms_output.put_line('Valor obrigatorio nao fornecido');
+            WHEN VALUE_ERROR THEN
+                dbms_output.put_line('Erro de atribuicao. Verifique os dados fornecidos');
+            WHEN DUP_VAL_ON_INDEX THEN
+                dbms_output.put_line('Federacao ja existente');
+    END insertFederacao;
+    
 END PacoteComandante;
 
-/*
-CREATE OR REPLACE PROCEDURE insere_federacao (
-    p_nacao Nacao.Nome%TYPE,
-    p_federacao Federacao.Nome%TYPE,
-    p_data_fundacao Federacao.Data_fund%TYPE DEFAULT TO_DATE(SYSDATE, 'dd/mm/yyyy')
-) IS
-    CURSOR c_federacao IS SELECT * FROM FEDERACAO F WHERE F.NOME = p_federacao;
-    v_federacao Federacao%ROWTYPE;
-    
-BEGIN
-    OPEN c_federacao;
-    IF c_federacao%FOUND THEN
-        UPDATE NACAO SET FEDERACAO = p_federacao WHERE NOME = p_nacao;
-    ELSE   
-        INSERT INTO FEDERACAO VALUES (p_federacao, p_data_fundacao);
-        UPDATE NACAO SET FEDERACAO = p_federacao WHERE NOME = p_nacao;
-        
-    END IF;
-END insere_federacao;
-*/
+-- TESTES
+DELETE FROM FEDERACAO F WHERE F.NOME = '3.a.ii';
 
+-- Caso 1: Todos os dados válidos
 DECLARE
-    v_nacao Nacao.Nome%TYPE;
-    v_federacao Federacao.Nome%TYPE;
+    v_liderCPI Lider.CPI%TYPE;
+    v_federacao_nome Federacao.NOME%TYPE;
+    v_federacao_dt_fund Federacao.DATA_FUND%TYPE;
     
 BEGIN
-    v_nacao := 'Facilis illo.';
-    v_federacao := 'Nova';
-    PacoteComandante.insere_federacao(v_nacao, v_federacao);
-
-    dbms_output.put_line('Federacao ' || v_federacao || ' associada à nacao ' || v_nacao);
+    v_liderCPI := '123.543.908-12'; -- Eh comandante
+    v_federacao_nome := '3.a.ii';
+    v_federacao_dt_fund := TO_DATE('01/01/2001', 'dd/mm/yyyy');
+    PacoteComandante.insertFederacao(v_liderCPI, v_federacao_nome, v_federacao_dt_fund);
+EXCEPTION
+    WHEN OTHERS THEN
+        dbms_output.put_line('Ocorreu um erro. Operacao cancelada');
 END;
+
+-- Caso 2: CPI informado não é de um comandante
+DECLARE
+    v_liderCPI Lider.CPI%TYPE;
+    v_federacao_nome Federacao.NOME%TYPE;
+    v_federacao_dt_fund Federacao.DATA_FUND%TYPE;
+    
+BEGIN
+        v_liderCPI := '408.540.985-55'; -- Nao eh comandante
+        v_federacao_nome := '3.a.ii';
+        v_federacao_dt_fund := TO_DATE('01/01/2001', 'dd/mm/yyyy');
+        PacoteComandante.insertFederacao(v_liderCPI, v_federacao_nome, v_federacao_dt_fund);
+EXCEPTION
+    WHEN OTHERS THEN
+        dbms_output.put_line('Ocorreu um erro. Operacao cancelada');
+END;
+
+-- Caso 3: Dados faltantes
+DECLARE
+    v_liderCPI Lider.CPI%TYPE;
+    v_federacao_nome Federacao.NOME%TYPE;
+    v_federacao_dt_fund Federacao.DATA_FUND%TYPE;
+    
+BEGIN
+    v_liderCPI := '123.543.908-12';
+    v_federacao_nome := ''; -- Federacao.NOME eh NOT NULL
+    v_federacao_dt_fund := TO_DATE('01/01/2001', 'dd/mm/yyyy');
+    PacoteComandante.insertFederacao(v_liderCPI, v_federacao_nome, v_federacao_dt_fund);
+EXCEPTION
+    WHEN OTHERS THEN
+        dbms_output.put_line('Ocorreu um erro. Operacao cancelada');
+END;
+
+-- Caso 4: Inserir federação existente
+DECLARE
+    v_liderCPI Lider.CPI%TYPE;
+    v_federacao_nome Federacao.NOME%TYPE;
+    v_federacao_dt_fund Federacao.DATA_FUND%TYPE;
+    
+BEGIN
+    v_liderCPI := '123.543.908-12';
+    v_federacao_nome := '3.a.ii';
+    v_federacao_dt_fund := TO_DATE('01/01/2001', 'dd/mm/yyyy');
+    PacoteComandante.insertFederacao(v_liderCPI, v_federacao_nome, v_federacao_dt_fund);
+EXCEPTION
+    WHEN OTHERS THEN
+        dbms_output.put_line('Ocorreu um erro. Operacao cancelada');
+END;
+
+
+/* 4) Implemente as seguines funcionalidades relacionadas ao usuario Cientista do Sistema Sociedade
+Galatica (ver descricao do projeto final):
+a. Gerenciamento: item 4.a (CRUD de estrelas)
+b. Relatorios: item 4.a (Informacoes de Estrelas, Planetas e Sistemas)
+*/

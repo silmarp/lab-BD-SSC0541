@@ -1,16 +1,16 @@
 /*
 SCC0541 - Laboratorio de Base de Dados
-Pratica 09 - PL/SQL ñ Procedimentos, Funcoes e Pacotes
+Pratica 09 - PL/SQL ‚Äì Procedimentos, Funcoes e Pacotes
 Moniely Silva Barboza - 12563800
 Silmar Pereira da Silva Junior - 12623950
 */
 
 set serveroutput on;
 
-/* 1) Implemente uma funÁ„o que calcule a dist‚ncia entre duas estrelas (pode ser dist‚ncia
+/* 1) Implemente uma fun√ß√£o que calcule a dist√¢ncia entre duas estrelas (pode ser dist√¢ncia
 Euclididana). */
 
-/* Ser· utilizada a distancia euclidiana dada por:
+/* Ser√° utilizada a distancia euclidiana dada por:
 distancia = sqrt ( (X2 - X1)^2 + (Y2 - Y1)^2 + (Z2 - Z1)^2 )
 */
 
@@ -70,7 +70,7 @@ BEGIN
     v_estrela2 := '29Pi  And';
     v_distancia := calcula_distancia(v_estrela1, v_estrela2);
     
-    dbms_output.put_line('A distancia entre as estrelas "' || v_estrela1 || '" e "' || v_estrela2 || '" È ' || v_distancia);
+    dbms_output.put_line('A distancia entre as estrelas "' || v_estrela1 || '" e "' || v_estrela2 || '" √© ' || v_distancia);
     
     EXCEPTION
         WHEN NO_DATA_FOUND THEN
@@ -80,7 +80,7 @@ END;
 /* Resultado:
     v_estrela1 := 'Alp Oct';
     v_estrela2 := '29Pi  And';
-A distancia entre as estrelas "Alp Oct" e "29Pi  And" È 205,938950049332855677777975828942337846
+A distancia entre as estrelas "Alp Oct" e "29Pi  And" √© 205,938950049332855677777975828942337846
 
     v_estrela1 := 'Teste';
     v_estrela2 := '29Pi  And';
@@ -89,9 +89,9 @@ Estrela nao encontrada
 
 
 /*2) 
-Implemente! a! seguinte! funcionalidade! relacionada! ao! usu·rio! LÌder) de) FacÁ„o! do! Sistema!
-Sociedade!Gal·tica!(ver!descriÁ„o!do!projeto!final):
-a. Gerenciamento:!!item!1.b!!(Remover'facÁ„o'de'NaÁ„o)
+Implemente! a! seguinte! funcionalidade! relacionada! ao! usu√°rio! L√≠der) de) Fac√ß√£o! do! Sistema!
+Sociedade!Gal√°tica!(ver!descri√ß√£o!do!projeto!final):
+a. Gerenciamento:!!item!1.b!!(Remover'fac√ß√£o'de'Na√ß√£o)
 */
 CREATE OR REPLACE PACKAGE faccaoManager AS 
 	-- Pacote para o item 1 das funcionalidades de gerenciamento
@@ -144,17 +144,17 @@ CREATE OR REPLACE PACKAGE BODY faccaoManager AS
 
 END faccaoManager;
 
-/* 3) Implemente a seguinte funcionalidade relacionada ao usu·rio Comandante do Sistema
-Sociedade Gal·tica (ver descriÁ„o do projeto final):
-a. Gerenciamento: item 3.a.ii (Criar nova federaÁ„o, com a prÛpria naÁ„o)
+/* 3) Implemente a seguinte funcionalidade relacionada ao usu√°rio Comandante do Sistema
+Sociedade Gal√°tica (ver descri√ß√£o do projeto final):
+a. Gerenciamento: item 3.a.ii (Criar nova federa√ß√£o, com a pr√≥pria na√ß√£o)
 */
 
 /*
-Comandante È de uma nacao
+Comandante √© de uma nacao
 Ele vai inserir uma nova federacao
 Essa nova federacao passa a ser e federacao da nacao
-Sea nacao j· tem federacao, update
-Sen„o insert
+Sea nacao j√° tem federacao, update
+Sen√£o insert
 */
 
 CREATE OR REPLACE PACKAGE PacoteComandante AS
@@ -216,5 +216,5 @@ BEGIN
     v_federacao := 'Nova';
     PacoteComandante.insere_federacao(v_nacao, v_federacao);
 
-    dbms_output.put_line('Federacao ' || v_federacao || ' associada ‡ nacao ' || v_nacao);
+    dbms_output.put_line('Federacao ' || v_federacao || ' associada √† nacao ' || v_nacao);
 END;

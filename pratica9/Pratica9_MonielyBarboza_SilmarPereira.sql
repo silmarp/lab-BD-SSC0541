@@ -202,6 +202,7 @@ CREATE OR REPLACE PACKAGE BODY PacoteComandante AS
             v_lider := isComandante(p_lider);    
             INSERT INTO FEDERACAO VALUES (p_federacao_nome, p_federacao_dt_fund);
             UPDATE NACAO N SET FEDERACAO = p_federacao_nome WHERE N.NOME = v_lider.nacao;
+            COMMIT;
 
             SELECT * INTO v_federacao FROM FEDERACAO F WHERE F.NOME = p_federacao_nome;
             SELECT * INTO v_nacao FROM NACAO N WHERE N.NOME = v_lider.nacao;

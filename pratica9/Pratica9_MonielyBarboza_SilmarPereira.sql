@@ -688,9 +688,9 @@ Não há o que deletar
 
 --b. Relatórios: item 4.a (Informações de Estrelas, Planetas e Sistemas) 
 CREATE OR REPLACE PACKAGE scienceReport AS 
-	FUNCTION systemReport() RETURN SYS_REFCURSOR;
-	FUNCTION planetReport() RETURN SYS_REFCURSOR;
-	FUNCTION starReport() RETURN SYS_REFCURSOR;
+	FUNCTION systemReport RETURN SYS_REFCURSOR;
+	FUNCTION planetReport RETURN SYS_REFCURSOR;
+	FUNCTION starReport RETURN SYS_REFCURSOR;
 END scienceReport;
 
 /
@@ -701,7 +701,7 @@ CREATE OR REPLACE PACKAGE BODY scienceReport AS
 Report contem estrela principal do sistema, estrelas que orbitam a principal, e planetas que orbitam ou
 a principal ou alguma das estrelas orbitantes. 
 */
-FUNCTION systemReport() RETURN SYS_REFCURSOR AS
+FUNCTION systemReport RETURN SYS_REFCURSOR AS
 	c_report SYS_REFCURSOR;
 BEGIN 
 	OPEN c_report FOR
@@ -710,26 +710,26 @@ BEGIN
 		LEFT JOIN ORBITA_PLANETA op ON op.ESTRELA = s.ESTRELA OR op.ESTRELA = oe.ORBITANTE;
 		
 	RETURN c_report;
-END systemReport();
+END systemReport;
 
 /*
  Contem cada planeta e suas informações, e a estrela que o orbita se orbitar
  Caso não orbite nenhuma estrela na aplicação será dito que é um planeta errante
  */
-FUNCTION planetReport() RETURN SYS_REFCURSOR AS
+FUNCTION planetReport RETURN SYS_REFCURSOR AS
 	c_report SYS_REFCURSOR;
 BEGIN 
 	OPEN c_report FOR
 		SELECT p.ID_ASTRO, p.MASSA, p.RAIO, p.CLASSIFICACAO FROM PLANETA p LEFT JOIN ORBITA_PLANETA op ON op.PLANETA = p.ID_ASTRO;
 		
 	RETURN c_report;
-END planetReport();
+END planetReport;
 
 
 /*
  Contem informações de cada estrela, e se tem planetas que a orbitam 
 */
-FUNCTION starReport() RETURN SYS_REFCURSOR AS
+FUNCTION starReport RETURN SYS_REFCURSOR AS
 	c_report SYS_REFCURSOR;
 BEGIN 
 	OPEN c_report FOR
@@ -737,6 +737,6 @@ BEGIN
 			FROM ESTRELA e LEFT JOIN ORBITA_PLANETA op ON e.ID_ESTRELA  = op.ESTRELA; 
 		
 	RETURN c_report;
-END starReport();
+END starReport;
 
 END scienceReport;

@@ -1,16 +1,16 @@
 /*
 SCC0541 - Laboratorio de Base de Dados
-Pratica 11 ñ Transacoes
+Pratica 11 ‚Äì Transacoes
 Moniely Silva Barboza - 12563800
 Silmar Pereira da Silva Junior - 12623950
 */
 
 /*
-1) Nesse exercÌcio, s„o necess·rias duas conexıes do mesmo usu·rio em seu esquema,
-chamadas aqui de SESS√O 1 e SESS√O 2. (O exercÌcio tambÈm pode ser feito com 2 usu·rios
-diferentes: SESS√O 1 sendo dono do esquema, e SESS√O 2 o outro usu·rio, com permiss„o de
-leitura nas tabelas do SESS√O 1).
-Execute os passos abaixo utilizando os dois principais tipos de nÌvel de isolamento disponÌveis no
+1) Nesse exerc√≠cio, s√£o necess√°rias duas conex√µes do mesmo usu√°rio em seu esquema,
+chamadas aqui de SESS√ÉO 1 e SESS√ÉO 2. (O exerc√≠cio tamb√©m pode ser feito com 2 usu√°rios
+diferentes: SESS√ÉO 1 sendo dono do esquema, e SESS√ÉO 2 o outro usu√°rio, com permiss√£o de
+leitura nas tabelas do SESS√ÉO 1).
+Execute os passos abaixo utilizando os dois principais tipos de n√≠vel de isolamento dispon√≠veis no
 Oracle (READ COMMITTED e SERIALIZABLE), analisando e explicando o que acontece em
 cada caso. Os mesmos passos devem ser executados para os dois tipos de isolamento.
 */
@@ -35,24 +35,24 @@ GRANT SELECT ON ESTRELA TO a12623950;
 GRANT SELECT ON ESPECIE TO a12623950;
 GRANT SELECT ON PLANETA TO a12623950;
 
-/* i. Abra uma conex„o para SESS√O 1 (m·quina 1); */
+/* i. Abra uma conex√£o para SESS√ÉO 1 (m√°quina 1); */
 
 
-/* ii. Abra outra conex„o para SESS√O 2 (m·quina 2); */
+/* ii. Abra outra conex√£o para SESS√ÉO 2 (m√°quina 2); */
 
 
-/* iii. Na SESS√O 2, inicie uma transaÁ„o com um dos nÌveis de isolamento (OBS: inicie a transaÁ„o
+/* iii. Na SESS√ÉO 2, inicie uma transa√ß√£o com um dos n√≠veis de isolamento (OBS: inicie a transa√ß√£o
 executando o comando SET TRANSACTION); */
 
 
-/* iv. Na SESS√O 2, faÁa uma consulta que envolva junÁ„o e/ou agrupamento (em SQL) (OBS:
-cuidado para n„o executar novamente o comando SET TRANSACTION ñ execute apenas o
+/* iv. Na SESS√ÉO 2, fa√ßa uma consulta que envolva jun√ß√£o e/ou agrupamento (em SQL) (OBS:
+cuidado para n√£o executar novamente o comando SET TRANSACTION ‚Äì execute apenas o
 comando de consulta); */
 
 
-/* v. Na SESS√O 1, execute um comando DML que afete a resposta da consulta executada no item
-anterior (OBS: n„o È necess·rio iniciar explicitamente uma transaÁ„o ñ considere a transaÁ„o
-iniciada implicitamente com o nÌvel de isolamento default). Execute a mesma consulta do item
+/* v. Na SESS√ÉO 1, execute um comando DML que afete a resposta da consulta executada no item
+anterior (OBS: n√£o √© necess√°rio iniciar explicitamente uma transa√ß√£o ‚Äì considere a transa√ß√£o
+iniciada implicitamente com o n√≠vel de isolamento default). Execute a mesma consulta do item
 anterior. O que aconteceu e por que? */
 
 DELETE FROM ORBITA_PLANETA OP WHERE OP.ESTRELA = 'ESTRELA_TESTE1' AND OP.PLANETA = 'PLANETA_TESTE1';
@@ -93,26 +93,26 @@ SK20	Skaro
 Observa-se que, o novo dado que acabou de ser inserido aparece no resultado da consulta da SESSAO1
 */
 
-/* vi. Na SESS√O 2, execute novamente a mesma consulta. O que aconteceu e por que? */
+/* vi. Na SESS√ÉO 2, execute novamente a mesma consulta. O que aconteceu e por que? */
 
 
-/* vii. Na SESS√O 1, execute COMMIT para efetivar a transaÁ„o; */
+/* vii. Na SESS√ÉO 1, execute COMMIT para efetivar a transa√ß√£o; */
 COMMIT;
 
-/* viii. Na SESS√O 2, execute novamente a mesma consulta. O que aconteceu e por que? */
+/* viii. Na SESS√ÉO 2, execute novamente a mesma consulta. O que aconteceu e por que? */
 
 
-/* ix. Na SESS√O 2, execute COMMIT para efetivar a transaÁ„o; */
+/* ix. Na SESS√ÉO 2, execute COMMIT para efetivar a transa√ß√£o; */
 
 
-/* x. Na SESS√O 2, execute novamente a mesma consulta. O que aconteceu e por que? */
+/* x. Na SESS√ÉO 2, execute novamente a mesma consulta. O que aconteceu e por que? */
 
 
 
 
 /* 2)
-a) Implemente um trigger para log de operaÁıes de DML para alguma tabela de sua escolha.
-Crie uma tabela para armazenar os dados de log: usu·rio que realizou a operaÁ„o, operaÁ„o,
+a) Implemente um trigger para log de opera√ß√µes de DML para alguma tabela de sua escolha.
+Crie uma tabela para armazenar os dados de log: usu√°rio que realizou a opera√ß√£o, opera√ß√£o,
 data/hora.
 */
 
@@ -131,11 +131,11 @@ DROP TRIGGER LogEstrela;
 
 CREATE OR REPLACE TRIGGER LogEstrela
     AFTER INSERT OR UPDATE OR DELETE ON Estrela
-    /* nÌvel de instruÁ„o */
+    /* n√≠vel de instru√ß√£o */
     DECLARE
     v_operacao CHAR;
     BEGIN
-    /*usando predicados booleanosÖ*/
+    /*usando predicados booleanos‚Ä¶*/
     IF INSERTING THEN v_operacao := 'I';
     ELSIF UPDATING THEN v_operacao := 'U';
     ELSIF DELETING THEN v_operacao := 'D';
@@ -156,21 +156,21 @@ INSERT INTO ESTRELA VALUES('ESTRELA_TESTE2', 'Estrela principal', 'Gigante branc
 UPDATE ESTRELA E SET E.NOME = 'Estrela Secundaria' WHERE E.ID_ESTRELA = 'ESTRELA_TESTE1';
 UPDATE ESTRELA E SET E.NOME = 'Estrela Terciaria' WHERE E.ID_ESTRELA = 'ESTRELA_TESTE2';
 
-/* b) Os triggers s„o executados dentro da mesma transaÁ„o em que È executada a operaÁ„o
-instruÁ„o de disparo e, portanto, as operaÁıes dentro do trigger s„o efetivadas (commit) ou
-desfeitas (rollback) junto com as operaÁıes da transaÁ„o em que est· a instruÁ„o.
-Implemente e teste esse cen·rio (i.e. teste commit e rollback da transaÁ„o em que est·
-a instruÁ„o que dispara o trigger e explique o que acontece no log).
+/* b) Os triggers s√£o executados dentro da mesma transa√ß√£o em que √© executada a opera√ß√£o
+instru√ß√£o de disparo e, portanto, as opera√ß√µes dentro do trigger s√£o efetivadas (commit) ou
+desfeitas (rollback) junto com as opera√ß√µes da transa√ß√£o em que est√° a instru√ß√£o.
+Implemente e teste esse cen√°rio (i.e. teste commit e rollback da transa√ß√£o em que est√°
+a instru√ß√£o que dispara o trigger e explique o que acontece no log).
 */
 
-/* c) Considere agora um cen·rio em que È interessante manter o log das informaÁıes de todas as
-tentativas de execuÁ„o de operaÁıes DML, mesmo que a operaÁ„o em si n„o tenha sido
-efetivada. Implemente e teste esse cen·rio (i.e. teste commit e rollback da transaÁ„o
-em que est· a instruÁ„o que dispara o trigger e explique o que acontece no log). */
+/* c) Considere agora um cen√°rio em que √© interessante manter o log das informa√ß√µes de todas as
+tentativas de execu√ß√£o de opera√ß√µes DML, mesmo que a opera√ß√£o em si n√£o tenha sido
+efetivada. Implemente e teste esse cen√°rio (i.e. teste commit e rollback da transa√ß√£o
+em que est√° a instru√ß√£o que dispara o trigger e explique o que acontece no log). */
 
-/* 3) Defina uma transaÁ„o que dever· ser implementada no projeto final (OBS: N„o È necess·rio
-implementar a transaÁ„o para esta pr·tica):
-a. Quais operaÁıes est„o incluÌdas na transaÁ„o (incluindo operaÁıes em triggers)?
+/* 3) Defina uma transa√ß√£o que dever√° ser implementada no projeto final (OBS: N√£o √© necess√°rio
+implementar a transa√ß√£o para esta pr√°tica):
+a. Quais opera√ß√µes est√£o inclu√≠das na transa√ß√£o (incluindo opera√ß√µes em triggers)?
 Justifique.
-b. Qual o nÌvel de isolamento da transÁ„o? Justifique.
-c. Ser· necess·rio utilizar savepoints e/ou transaÁıes autÙnomas? Justifique. */
+b. Qual o n√≠vel de isolamento da trans√ß√£o? Justifique.
+c. Ser√° necess√°rio utilizar savepoints e/ou transa√ß√µes aut√¥nomas? Justifique. */

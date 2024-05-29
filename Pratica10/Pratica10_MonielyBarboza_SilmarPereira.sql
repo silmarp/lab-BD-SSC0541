@@ -8,14 +8,14 @@ Silmar Pereira da Silva Junior - 12623950
 /*
 1. Implemente triggers para consistencia das seguintes restricoes:
 */
-
--- a) Uma federacao so pode existir se estiver associada a pelo menos 1 nacao.
-
+-- a) Uma federação só pode existir se estiver associada a pelo menos 1 nação.  
+/*
+assumimos que toda inserção de uma nova federação irá ser adicionando juntamente sua primeira nação
+na interface ao adicionar uma nova nação será possivel escolher entre federações existentes ou criar uma nova.
+assim teremos trigger apenas after delete
+*/
 CREATE OR REPLACE TRIGGER fedExist
--- assumimos que toda inserção de uma federação irá ser adicionando juntamente com uma nação
--- assim o trigger será after delete
-AFTER DELETE ON NACAO
--- considerar update também 
+AFTER DELETE OR UPDATE ON NACAO
 FOR EACH ROW
 DECLARE 
 	v_countNaccao number;
@@ -23,19 +23,30 @@ BEGIN
 	SELECT count(*) INTO v_countNaccao FROM NACAO n  WHERE n.FEDERACAO = :OLD.FEDERACAO;
 	
 	IF v_countNaccao = 0 THEN
-		-- Se não tem 1 ou mais naçoes na federação devemos exclui-lá ?
-		-- Outra alternativa seria não permitir a exclusão da nação usando o before delete on
+		-- Caso uma determinada federação fique sem nações então deverá ser excluida
 		DELETE FROM FEDERACAO f WHERE f.NOME = :OLD.FEDERACAO;
 	END IF;
-	
-	EXCEPTION
 END fedExist;
 
+-- Testes
+INSERT INTO FEDERACAO f values('Old Imperium', TO_DATE('01/01/2020', 'dd/mm/yyyy'));
 
--- b) O lider de uma faccao deve estar associado a uma nacao em que a faccao esta presente.
+INSERT INTO NACAO n values('Cala', 0, 'Old Imperium');
+
+DELETE FROM NACAO WHERE nome = 'Cala';
+
+SELECT * FROM FEDERACAO f LEFT JOIN NACAO n on n.FEDERACAO = f.NOME  WHERE f.nome = 'Old Imperium';
+
+/* Resultado
+
+*/
+-- b) O líder de uma facção deve estar associado a uma nação em que a facção está presente.  
 CREATE OR REPLACE TRIGGER validLider
-BEFORE INSERT OR UPDATE ON FACCAO 
+after INSERT OR UPDATE ON FACCAO 
 FOR EACH ROW 
+WHEN (
+	NEW.QTD_NACOES != 0
+)
 DECLARE 
 	e_notPartOfFaction EXCEPTION;
 	v_countLider NUMBER;
@@ -48,63 +59,149 @@ BEGIN
 	
 END validLider;
 
+-- TESTES
+INSERT INTO NACAO n values('Cala', 0, NULL);
+
+INSERT INTO LIDER values('551.398.886-11', 'Paul Atreides', 'COMANDANTE', 'Cala', 'Non eos qui');
 
 
--- c) A quantidade de nacoes, na tabela Faccao dever estar sempre atualizada.
+INSERT INTO FACCAO values('Fremen', '551.398.886-11', 'TOTALITARIA', 0)
+
+INSERT INTO NACAO_FACCAO values('Cala', 'Fremen');
+
+
+-- c) A quantidade de nações, na tabela Faccao dever estar sempre atualizada.  
 CREATE OR REPLACE TRIGGER atualizaFacNacoes
-BEFORE INSERT OR UPDATE OR DELETE ON NACAO 
+after INSERT OR UPDATE OR DELETE ON nacao_faccao
 FOR EACH ROW 
 DECLARE 
 BEGIN 
 	IF INSERTING THEN 
-		UPDATE faccao SET QTD_NACOES = QTD_NACOES + 1 WHERE nome = :NEW.FEDERACAO;
- 
+		UPDATE faccao SET QTD_NACOES = QTD_NACOES + 1 WHERE nome = :NEW.faccao;
+
+		
  	ELSIF UPDATING THEN 
  		-- remove 1 do qtd para a faccao que perdeu nação e adiciona 1 para a que ganhou
- 		-- no fim da na mesma se a alteração não for na federação, entretanto seria um despercicio de processamento ? 
- 		UPDATE faccao SET QTD_NACOES = QTD_NACOES - 1 WHERE nome = :OLD.FEDERACAO;
- 		UPDATE faccao SET QTD_NACOES = QTD_NACOES + 1 WHERE nome = :NEW.FEDERACAO;
- 
+ 		-- No caso em que o update não afeta federação, não faz nada
+ 		UPDATE faccao SET QTD_NACOES = QTD_NACOES + 1 WHERE nome = :NEW.faccao; 			
+ 		UPDATE faccao SET QTD_NACOES = QTD_NACOES - 1 WHERE nome = :OLD.faccao;
+ 	
  	ELSIF DELETING THEN
- 		UPDATE faccao SET QTD_NACOES = QTD_NACOES - 1 WHERE nome = :NEW.FEDERACAO;;    
- END IF;  
-
+ 		UPDATE faccao SET QTD_NACOES = QTD_NACOES - 1 WHERE nome = :NEW.faccao;
+ 	END IF;  
 END atualizaFacNacoes;
 
--- d) Na tabela Nacao, o atributo qtd_planetas deve considerar somente dominancias atuais.
+-- TESTES
+INSERT INTO NACAO n values('Cala', 0, NULL);
 
--- maybe fazer 2 triggers (ou até 3, um para cada um) um para inserção e deleção e outro para update para resolver o problema do if
-CREATE OR REPLACE TRIGGER validQTDPlanetas
-BEFORE INSERT OR UPDATE OR DELETE ON DOMINANCIA 
+INSERT INTO NACAO n values('Arrakeen', 0, NULL);
+
+INSERT INTO LIDER values('551.398.886-11', 'Paul Atreides', 'COMANDANTE', 'Cala', 'Non eos qui');
+
+INSERT INTO FACCAO values('Fremen', '551.398.886-11', 'TOTALITARIA', 0)
+
+INSERT INTO NACAO_FACCAO values('Cala', 'Fremen');
+
+INSERT INTO NACAO_FACCAO values('Arrakeen', 'Fremen');
+
+SELECT f.QTD_NACOES FROM FACCAO f WHERE f.NOME = 'Fremen';
+
+/* Resultado
+2
+*/
+
+DELETE FROM NACAO_FACCAO WHERE nacao = 'Cala';
+
+INSERT INTO LIDER VALUES('456.666.333-12', 'Vladimir', 'COMANDANTE', 'Arrakeen', 'Non eos qui');
+
+INSERT INTO FACCAO values('Harkonnen', '456.666.333-12', 'TOTALITARIA', 0);
+
+UPDATE NACAO_FACCAO SET FACCAO = 'Harkonnen' WHERE NACAO = 'Arrakeen';
+
+SELECT f.QTD_NACOES FROM FACCAO f WHERE f.NOME = 'Fremen';
+
+/* Resultado
+0
+*/
+
+-- d) Na tabela Nacao, o atributo qtd_planetas deve considerar somente dominâncias atuais.  
+CREATE OR REPLACE TRIGGER updateAddQTDPlaneta
+AFTER INSERT OR UPDATE ON DOMINANCIA 
 FOR EACH ROW 
-
 WHEN (
-		-- Para insert e update se o novo valor for atual então procegue
-		(NEW.data_ini <= CURRENT_DATE AND (NEW.data_fim >= CURRENT_DATE OR NEW.data_fim = NULL) ) 
-	OR 
-		-- Para delete e update se o valor antigo for atual procegue
-		(OLD.data_ini <= CURRENT_DATE AND (OLD.data_fim >= CURRENT_DATE OR OLD.data_fim = NULL)) 
+		-- Para insert e update se dominancia for de não atual para atual
+		(NEW.data_ini <= current_date  AND ( NEW.data_fim > current_date OR NEW.data_fim is NULL ))
+		
+		OR
+		-- Caso a nação mude E a dominancia ainda seja atual
+		(OLD.NACAO != NEW.NACAO and NEW.data_ini <= current_date  AND ( NEW.data_fim > current_date  OR NEW.data_fim is NULL ))
 	)
 DECLARE 
 BEGIN 
-	IF INSERTING THEN 
-		UPDATE faccao SET QTD_PLANETAS = QTD_PLANETAS + 1 WHERE nome = :NEW.nacao;
- 
- 	ELSIF UPDATING THEN 
- 		-- Mesmo problema do de cima com relação a performance
- 		-- e se o update for de um atual para um não atual ??
- 		-- e o oposto de um não atual para um atual ??
- 		-- em ambos um será atualizado corretamente e o outro não (deveriamos adicionar um if aqui também ?)
- 		UPDATE NACAO  SET QTD_PLANETAS = QTD_PLANETAS - 1 WHERE nome = :OLD.nacao;
- 		UPDATE faccao SET QTD_PLANETAS = QTD_PLANETAS + 1 WHERE nome = :NEW.nacao;
- 
- 	ELSIF DELETING THEN
- 		UPDATE faccao SET QTD_PLANETAS = QTD_PLANETAS - 1 WHERE nome = :NEW.nacao;;    
- END IF;  
-
-END atualizaFacNacoes;
+	UPDATE NACAO SET QTD_PLANETAS = QTD_PLANETAS + 1 WHERE nome = :NEW.NACAO;
+END updateAddQTDPlaneta;
 
 
+CREATE OR REPLACE TRIGGER updateSubtractQTDPlaneta
+AFTER UPDATE OR DELETE ON DOMINANCIA 
+FOR EACH ROW 
+WHEN (
+		-- Para delete e update caso a dominancia vá de atual para não atual
+		(OLD.data_ini <= CURRENT_DATE AND (OLD.data_fim >= CURRENT_DATE OR OLD.data_fim is NULL))
+		
+		OR 
+		
+		-- Caso a nacao mude e a dominancia antiga era atual
+		(OLD.NACAO != NEW.NACAO OR OLD.data_ini <= CURRENT_DATE AND (OLD.data_fim >= CURRENT_DATE OR OLD.data_fim is NULL))
+	)
+DECLARE 
+BEGIN 
+ 	UPDATE NACAO SET QTD_PLANETAS = QTD_PLANETAS - 1 WHERE nome = :OLD.nacao;
+END updateSubtractQTDPlaneta;
+
+-- TESTES
+INSERT INTO NACAO n values('Arrakeen', 0, NULL);
+
+INSERT INTO PLANETA p values('Arrakis', 463.514, 4535.897, NULL);
+
+INSERT INTO PLANETA p values('Caladan', 463.514, 4535.897, NULL);
+
+INSERT INTO PLANETA p values('Giedi', 463.514, 4535.897, NULL);
+
+-- Dominancia atual
+INSERT INTO DOMINANCIA d values('Arrakis', 'Arrakeen', TO_DATE('01/01/1999', 'dd/mm/yyyy'), NULL);
+
+-- Dominancia passada
+INSERT INTO DOMINANCIA d values('Giedi', 'Arrakeen', TO_DATE('01/01/1300', 'dd/mm/yyyy'), TO_DATE('01/01/1800', 'dd/mm/yyyy'));
+
+-- Dominancia futura
+INSERT INTO DOMINANCIA d values('Caladan', 'Arrakeen', TO_DATE('01/01/2950', 'dd/mm/yyyy'), TO_DATE('01/01/3099', 'dd/mm/yyyy'));
+
+SELECT n.QTD_PLANETAS  FROM NACAO n WHERE n.NOME = 'Arrakeen';
+/* Resultado
+1
+*/
+
+UPDATE DOMINANCIA SET DATA_INI = TO_DATE('01/01/2020', 'dd/mm/yyyy') WHERE PLANETA = 'Caladan' AND NACAO = 'Arrakeen';
+
+SELECT n.QTD_PLANETAS  FROM NACAO n WHERE n.NOME = 'Arrakeen';
+/* Resultado
+2
+*/
+
+UPDATE DOMINANCIA SET DATA_FIM  = TO_DATE('01/01/2020', 'dd/mm/yyyy') WHERE PLANETA = 'Arrakis' AND NACAO = 'Arrakeen';
+
+SELECT n.QTD_PLANETAS  FROM NACAO n WHERE n.NOME = 'Arrakeen';
+/* Resultado
+1
+*/
+
+DELETE FROM DOMINANCIA WHERE PLANETA = 'Caladan' AND NACAO = 'Arrakeen';
+
+SELECT n.QTD_PLANETAS  FROM NACAO n WHERE n.NOME = 'Arrakeen';
+/* Resultado
+0
+*/
 
 /*
 2. Usando view e trigger instead-of implemente a funcionalidade (de Gerenciamento) a.iii do Lider

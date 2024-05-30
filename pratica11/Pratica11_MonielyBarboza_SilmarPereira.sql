@@ -1,16 +1,16 @@
 /*
 SCC0541 - Laboratorio de Base de Dados
-Pratica 11 – Transacoes
+Pratica 11 - Transacoes
 Moniely Silva Barboza - 12563800
 Silmar Pereira da Silva Junior - 12623950
 */
 
 /*
-1) Nesse exercício, são necessárias duas conexões do mesmo usuário em seu esquema,
-chamadas aqui de SESSÃO 1 e SESSÃO 2. (O exercício também pode ser feito com 2 usuários
-diferentes: SESSÃO 1 sendo dono do esquema, e SESSÃO 2 o outro usuário, com permissão de
-leitura nas tabelas do SESSÃO 1).
-Execute os passos abaixo utilizando os dois principais tipos de nível de isolamento disponíveis no
+1) Nesse exercicio, sao necessarias duas conexoes do mesmo usuario em seu esquema,
+chamadas aqui de SESSAO 1 e SESSAO 2. (O exercicio tambem pode ser feito com 2 usuarios
+diferentes: SESSAO 1 sendo dono do esquema, e SESSAO 2 o outro usuario, com permissao de
+leitura nas tabelas do SESSAO 1).
+Execute os passos abaixo utilizando os dois principais tipos de nivel de isolamento disponiveis no
 Oracle (READ COMMITTED e SERIALIZABLE), analisando e explicando o que acontece em
 cada caso. Os mesmos passos devem ser executados para os dois tipos de isolamento.
 */
@@ -19,6 +19,23 @@ cada caso. Os mesmos passos devem ser executados para os dois tipos de isolament
 -- USER2: a12623950
 
 -- Concedendo permissoes
+
+-- TODO: Testar esse script depois
+SET PAGESIZE 0
+SET LINESIZE 100
+SET FEEDBACK OFF
+SPOOL grant_permissions.sql
+
+SELECT 'GRANT SELECT ON ' || table_name || ' TO a12623950;'
+FROM all_tables
+WHERE owner = 'a12563800';
+
+SPOOL OFF
+
+@grant_permissions.sql
+
+-- TODO: Se der certo o script, apagar esses debaixo
+
 GRANT SELECT ON PARTICIPA TO a12623950;
 GRANT SELECT ON NACAO_FACCAO TO a12623950;
 GRANT SELECT ON FACCAO TO a12623950;
@@ -35,24 +52,24 @@ GRANT SELECT ON ESTRELA TO a12623950;
 GRANT SELECT ON ESPECIE TO a12623950;
 GRANT SELECT ON PLANETA TO a12623950;
 
-/* i. Abra uma conexão para SESSÃO 1 (máquina 1); */
+/* i. Abra uma conexao para SESSAO 1 (maquina 1); */
 
 
-/* ii. Abra outra conexão para SESSÃO 2 (máquina 2); */
+/* ii. Abra outra conexao para SESSAO 2 (maquina 2); */
 
 
-/* iii. Na SESSÃO 2, inicie uma transação com um dos níveis de isolamento (OBS: inicie a transação
+/* iii. Na SESSAO 2, inicie uma transacao com um dos niveis de isolamento (OBS: inicie a transacao
 executando o comando SET TRANSACTION); */
 
 
-/* iv. Na SESSÃO 2, faça uma consulta que envolva junção e/ou agrupamento (em SQL) (OBS:
-cuidado para não executar novamente o comando SET TRANSACTION – execute apenas o
+/* iv. Na SESSAO 2, faca uma consulta que envolva juncao e/ou agrupamento (em SQL) (OBS:
+cuidado para nao executar novamente o comando SET TRANSACTION ? execute apenas o
 comando de consulta); */
 
 
-/* v. Na SESSÃO 1, execute um comando DML que afete a resposta da consulta executada no item
-anterior (OBS: não é necessário iniciar explicitamente uma transação – considere a transação
-iniciada implicitamente com o nível de isolamento default). Execute a mesma consulta do item
+/* v. Na SESSAO 1, execute um comando DML que afete a resposta da consulta executada no item
+anterior (OBS: nao e necessario iniciar explicitamente uma transacao ? considere a transacao
+iniciada implicitamente com o nivel de isolamento default). Execute a mesma consulta do item
 anterior. O que aconteceu e por que? */
 
 DELETE FROM ORBITA_PLANETA OP WHERE OP.ESTRELA = 'ESTRELA_TESTE1' AND OP.PLANETA = 'PLANETA_TESTE1';
@@ -93,84 +110,142 @@ SK20	Skaro
 Observa-se que, o novo dado que acabou de ser inserido aparece no resultado da consulta da SESSAO1
 */
 
-/* vi. Na SESSÃO 2, execute novamente a mesma consulta. O que aconteceu e por que? */
+/* vi. Na SESSAO 2, execute novamente a mesma consulta. O que aconteceu e por que? */
 
 
-/* vii. Na SESSÃO 1, execute COMMIT para efetivar a transação; */
+/* vii. Na SESSAO 1, execute COMMIT para efetivar a transacao; */
 COMMIT;
 
-/* viii. Na SESSÃO 2, execute novamente a mesma consulta. O que aconteceu e por que? */
+/* viii. Na SESSAO 2, execute novamente a mesma consulta. O que aconteceu e por que? */
 
 
-/* ix. Na SESSÃO 2, execute COMMIT para efetivar a transação; */
+/* ix. Na SESSAO 2, execute COMMIT para efetivar a transacao; */
 
 
-/* x. Na SESSÃO 2, execute novamente a mesma consulta. O que aconteceu e por que? */
+/* x. Na SESSAO 2, execute novamente a mesma consulta. O que aconteceu e por que? */
 
 
 
 
 /* 2)
-a) Implemente um trigger para log de operações de DML para alguma tabela de sua escolha.
-Crie uma tabela para armazenar os dados de log: usuário que realizou a operação, operação,
+a) Implemente um trigger para log de operacoes de DML para alguma tabela de sua escolha.
+Crie uma tabela para armazenar os dados de log: usuario que realizou a operacao, operacao,
 data/hora.
+*/
+
+--Criacao da tabela de logs
+/* OBS: Considerando que é possível que um mesmo usuário execute 2 oprações iguais
+no mesmo momento (como 2 inserts/updates/delestes, em sequencia), utilizar apenas os atributos 
+da tabela como chave primária estava causando erros de duplicacao de chave.
+Por esse motivo, soi criado um id sintetico para o log)
 */
 
 DROP TABLE LogTabelaEstrela;
 
 CREATE TABLE logTabelaEstrela (
+    ID_LOG VARCHAR(20),
     ID_USER VARCHAR(9) NOT NULL,
     OPERACAO CHAR NOT NULL,
-    DATA_HORA TIMESTAMP (2) NOT NULL,
+    DATA_HORA DATE NOT NULL,
     
-    CONSTRAINT PK_LOG_TABELA_ESTRELA PRIMARY KEY (ID_USER, OPERACAO, DATA_HORA)
+    CONSTRAINT PK_LOG_TABELA_ESTRELA PRIMARY KEY (ID_LOG)
 );
-COMMIT;
+
+
+DROP SEQUENCE log_seq;
+CREATE SEQUENCE log_seq START WITH 1 INCREMENT BY 1;
+
+-- Criacao do Trigger
 
 DROP TRIGGER LogEstrela;
 
 CREATE OR REPLACE TRIGGER LogEstrela
     AFTER INSERT OR UPDATE OR DELETE ON Estrela
-    /* nível de instrução */
     DECLARE
-    v_operacao CHAR;
+        v_operacao CHAR;
+        v_id_log VARCHAR(20);
     BEGIN
-    /*usando predicados booleanos…*/
-    IF INSERTING THEN v_operacao := 'I';
-    ELSIF UPDATING THEN v_operacao := 'U';
-    ELSIF DELETING THEN v_operacao := 'D';
-    END IF;
-    INSERT INTO logTabelaEstrela
-    VALUES (USER, v_operacao, LOCALTIMESTAMP (2));
-    
-    --TODO: Exceptions
+        IF INSERTING THEN v_operacao := 'I';
+        ELSIF UPDATING THEN v_operacao := 'U';
+        ELSIF DELETING THEN v_operacao := 'D';
+        END IF;
+        v_id_log := TO_CHAR(log_seq.NEXTVAL, 'FM0000000000');
+        INSERT INTO logTabelaEstrela
+            VALUES (v_id_log, USER, v_operacao, SYSDATE);
 END LogEstrela;
 
-
-DELETE FROM ESTRELA E WHERE E.ID_ESTRELA = 'ESTRELA_TESTE1';
-DELETE FROM ESTRELA E WHERE E.ID_ESTRELA = 'ESTRELA_TESTE2';
-
-INSERT INTO ESTRELA VALUES('ESTRELA_TESTE1', 'Estrela principal', 'Gigante branca', 10.5, -3, 1, 4);
-INSERT INTO ESTRELA VALUES('ESTRELA_TESTE2', 'Estrela principal', 'Gigante branca', 10.5, 1, 2, 3);
-
-UPDATE ESTRELA E SET E.NOME = 'Estrela Secundaria' WHERE E.ID_ESTRELA = 'ESTRELA_TESTE1';
-UPDATE ESTRELA E SET E.NOME = 'Estrela Terciaria' WHERE E.ID_ESTRELA = 'ESTRELA_TESTE2';
-
-/* b) Os triggers são executados dentro da mesma transação em que é executada a operação
-instrução de disparo e, portanto, as operações dentro do trigger são efetivadas (commit) ou
-desfeitas (rollback) junto com as operações da transação em que está a instrução.
-Implemente e teste esse cenário (i.e. teste commit e rollback da transação em que está
-a instrução que dispara o trigger e explique o que acontece no log).
+/* b) Os triggers sao executados dentro da mesma transacao em que e executada a operacao
+instrucao de disparo e, portanto, as operacoes dentro do trigger sao efetivadas (commit) ou
+desfeitas (rollback) junto com as operacoes da transacao em que esta a instrucao.
+Implemente e teste esse cenario (i.e. teste commit e rollback da transacao em que esta
+a instrucao que dispara o trigger e explique o que acontece no log).
 */
 
-/* c) Considere agora um cenário em que é interessante manter o log das informações de todas as
-tentativas de execução de operações DML, mesmo que a operação em si não tenha sido
-efetivada. Implemente e teste esse cenário (i.e. teste commit e rollback da transação
-em que está a instrução que dispara o trigger e explique o que acontece no log). */
+/* Ate este momento, a transacao esta com nivel de isolamento padrao (Read Commited).
+Ou seja, caso haja rollback da instrucao de disparo, tambem havera rollback na tabela de logs.
+*/
 
-/* 3) Defina uma transação que deverá ser implementada no projeto final (OBS: Não é necessário
-implementar a transação para esta prática):
-a. Quais operações estão incluídas na transação (incluindo operações em triggers)?
+BEGIN
+    DELETE FROM ESTRELA E WHERE E.ID_ESTRELA = 'ESTRELA_TESTE1';
+    INSERT INTO ESTRELA VALUES('ESTRELA_TESTE1', 'Estrela principal', 'Gigante branca', 10.5, -3, 1, 4);
+    UPDATE ESTRELA E SET E.NOME = 'Estrela Secundaria' WHERE E.ID_ESTRELA = 'ESTRELA_TESTE1';
+    COMMIT;
+    
+    DELETE FROM ESTRELA E WHERE E.ID_ESTRELA = 'ESTRELA_TESTE2';
+    INSERT INTO ESTRELA VALUES('ESTRELA_TESTE2', 'Estrela principal', 'Gigante branca', 10.5, 1, 2, 3);
+    UPDATE ESTRELA E SET E.NOME = 'Estrela Terciaria' WHERE E.ID_ESTRELA = 'ESTRELA_TESTE2';
+    ROLLBACK;
+END;
+
+/* Executando o bloco PL/SQL acima, temos 6 instrucoes de disparo:
+em 3 delas foi executado commit e nas outras 3 foi executado rollback.
+Sendo assim, na tabela de logs, temos apenas 3 operacoes registradas (as em que foi executado o commit).
+*/
+
+/* c) Considere agora um cenario em que e interessante manter o log das informacoes de todas as
+tentativas de execucao de operacoes DML, mesmo que a operacao em si nao tenha sido
+efetivada. Implemente e teste esse cenario (i.e. teste commit e rollback da transacao
+em que esta a instrucao que dispara o trigger e explique o que acontece no log).
+*/
+
+
+-- Criacao do Trigger Autonomo
+CREATE OR REPLACE TRIGGER LogEstrela
+    AFTER INSERT OR UPDATE OR DELETE ON Estrela
+    DECLARE
+        PRAGMA AUTONOMOUS_TRANSACTION;
+        v_operacao CHAR;
+        v_id_log VARCHAR(20);
+    BEGIN
+        IF INSERTING THEN v_operacao := 'I';
+        ELSIF UPDATING THEN v_operacao := 'U';
+        ELSIF DELETING THEN v_operacao := 'D';
+        END IF;
+        v_id_log := TO_CHAR(log_seq.NEXTVAL, 'FM0000000000');
+        INSERT INTO logTabelaEstrela
+            VALUES (v_id_log, USER, v_operacao, SYSDATE);
+        COMMIT;
+END LogEstrela;
+
+/* Para este exercício, alteramos o trigger para que ele seja uma transacao autonoma.
+Alem disso, a estrela 'ESTRELA_TESTE1' já foi inserida no item anterior.
+Sendo assim, ao fim do bloco PL/SQL abaixo, se não tivessemos o ROLLBACK,
+essa estrela deveria ter sido deletada. Contudo, testaremos este cenario.
+*/
+
+BEGIN
+    DELETE FROM ESTRELA E WHERE E.ID_ESTRELA = 'ESTRELA_TESTE1';    
+    ROLLBACK;
+END;
+
+/* Como temos o ROLLBACK ao fim do bloco, a estrela permanece na tabela Estrela.
+Entretanto, a operacao de delete foi registrada na tabela de logs, já que e o 
+registro do log é uma transacao autonoma. */
+
+
+/* 3) Defina uma transacao que devera ser implementada no projeto final (OBS: Nao e necessario
+implementar a transacao para esta pratica):
+a. Quais operacoes estao incluidas na transacao (incluindo operacoes em triggers)?
 Justifique.
-b. Qual o nível de isolamento da transção? Justifique.
-c. Será necessário utilizar savepoints e/ou transações autônomas? Justifique. */
+b. Qual o nivel de isolamento da transcao? Justifique.
+c. Sera necessario utilizar savepoints e/ou transacoes autonomas? Justifique. */

@@ -11,21 +11,48 @@ Silmar Pereira da Silva Junior - 12623950
 -- a) Uma federação só pode existir se estiver associada a pelo menos 1 nação.  
 /*
 assumimos que toda inserção de uma nova federação irá ser adicionando juntamente sua primeira nação
-na interface ao adicionar uma nova nação será possivel escolher entre federações existentes ou criar uma nova.
-assim teremos trigger apenas after delete
+na interface do projeto final, ao adicionar uma nova nação será possivel escolher entre federações existentes ou criar uma nova.
+assim não teremos um trigger que afete insert.
 */
 CREATE OR REPLACE TRIGGER fedExist
-AFTER DELETE OR UPDATE ON NACAO
-FOR EACH ROW
-DECLARE 
-	v_countNaccao number;
+FOR DELETE OR UPDATE ON NACAO 
+compound trigger
+	TYPE t_tab_feds IS TABLE OF NUMBER INDEX BY FEDERACAO.nome%TYPE; 
+	v_feds t_tab_feds;
+	e_fedWithoutNations EXCEPTION;
+BEFORE STATEMENT IS
 BEGIN
-	SELECT count(*) INTO v_countNaccao FROM NACAO n  WHERE n.FEDERACAO = :OLD.FEDERACAO;
-	
-	IF v_countNaccao = 0 THEN
-		-- Caso uma determinada federação fique sem nações então deverá ser excluida
-		DELETE FROM FEDERACAO f WHERE f.NOME = :OLD.FEDERACAO;
-	END IF;
+	FOR fed IN (SELECT n.FEDERACAO, count(n.federacao) AS qtd FROM NACAO n WHERE n.federacao IS NOT NULL GROUP BY n.FEDERACAO) LOOP 
+		v_feds(fed.federacao) := fed.qtd;
+	END LOOP;
+END BEFORE STATEMENT;
+
+BEFORE EACH ROW IS
+BEGIN
+    
+	IF UPDATING THEN 
+		IF :OLD.federacao IS NOT null THEN
+			v_feds(:OLD.federacao) := v_feds(:OLD.federacao) - 1;
+		ELSIF :NEW.federacao IS NOT null THEN
+			v_feds(:NEW.federacao) := v_feds(:NEW.federacao) + 1;
+		END IF;
+    ELSIF DELETING AND :OLD.federacao IS NOT null THEN 
+   		v_feds(:OLD.federacao) := v_feds(:OLD.federacao) - 1;
+    END IF;
+END BEFORE EACH ROW;
+
+AFTER STATEMENT IS
+	v_fed federacao.nome%TYPE;
+BEGIN
+  v_fed := v_feds.FIRST;
+  WHILE v_fed IS NOT NULL LOOP
+  IF v_feds(v_fed) = 0 THEN
+  	raise e_fedWithoutNations;
+   	--DELETE FROM federacao WHERE nome = v_fed;
+  END if;
+    v_fed := v_feds.NEXT(v_fed);
+  END LOOP;
+END AFTER STATEMENT;
 END fedExist;
 
 -- Testes
@@ -33,30 +60,39 @@ INSERT INTO FEDERACAO f values('Old Imperium', TO_DATE('01/01/2020', 'dd/mm/yyyy
 
 INSERT INTO NACAO n values('Cala', 0, 'Old Imperium');
 
+UPDATE NACAO SET FEDERACAO = NULL WHERE nome = 'Cala';
+
 DELETE FROM NACAO WHERE nome = 'Cala';
 
-SELECT * FROM FEDERACAO f LEFT JOIN NACAO n on n.FEDERACAO = f.NOME  WHERE f.nome = 'Old Imperium';
+/* Resultado de ambos delete e update
+SQL Error [6510] [65000]: ORA-06510: PL/SQL: unhandled user-defined exception
+ORA-06512: at "A12623950.FEDEXIST", line 33
+ORA-04088: error during execution of trigger 'A12623950.FEDEXIST'
 
-/* Resultado
-
+Como se o delete ou o update forem efetivado a federação ficará sem naçoes é dado um erro
+Esse erro será tratado na aplicação, ao ser desenvolvido o delete e update de nações
 */
+
 -- b) O líder de uma facção deve estar associado a uma nação em que a facção está presente.  
 CREATE OR REPLACE TRIGGER validLider
 after INSERT OR UPDATE ON FACCAO 
 FOR EACH ROW 
-WHEN (
-	NEW.QTD_NACOES != 0
-)
 DECLARE 
 	e_notPartOfFaction EXCEPTION;
-	v_countLider NUMBER;
+	v_liderNac nacao.nome%TYPE;
+	v_valid NUMBER;
 BEGIN 
-	SELECT count(*) INTO v_countLider FROM LIDER l JOIN NACAO n ON l.NACAO = n.NOME AND n.nome IN (SELECT nf.NACAO FROM NACAO_FACCAO nf WHERE nf.FACCAO = :NEW.NOME );
-	
-	IF v_countLider = 0 then
-		raise e_notPartOfFaction;
-	end IF;
-	
+    IF INSERTING THEN 
+    	-- Ao criar uma nova facção ja adicionamos a nação do lider como ela estando presente
+    	SELECT n.nome INTO v_liderNac FROM NACAO n JOIN lider l ON n.nome = l.nacao WHERE l.CPI = :NEW.lider;
+   		INSERT INTO NACAO_FACCAO values(v_liderNac, :NEW.NOME);
+    ELSIF UPDATING THEN 
+    	--se retornar 0 não está presente se retornar 1 está
+   		SELECT count(*) INTO v_valid FROM NACAO_FACCAO nf JOIN LIDER l ON l.NACAO = nf.NACAO WHERE nf.FACCAO = :NEW.nome;
+    	IF v_valid = 0 THEN
+    		raise e_notPartOfFaction;
+    	END IF;
+   	END IF;
 END validLider;
 
 -- TESTES
@@ -64,11 +100,20 @@ INSERT INTO NACAO n values('Cala', 0, NULL);
 
 INSERT INTO LIDER values('551.398.886-11', 'Paul Atreides', 'COMANDANTE', 'Cala', 'Non eos qui');
 
+INSERT INTO LIDER values('452.986.325-11', 'Dunkan Idaho', 'OFICIAL', 'Cala', 'Non eos qui');
 
-INSERT INTO FACCAO values('Fremen', '551.398.886-11', 'TOTALITARIA', 0)
+INSERT INTO NACAO n values('Arrakeen', 0, NULL);
 
-INSERT INTO NACAO_FACCAO values('Cala', 'Fremen');
+INSERT INTO LIDER VALUES('456.666.333-12', 'Vladimir', 'COMANDANTE', 'Arrakeen', 'Non eos qui');
 
+-- insere nova faccao e adiciona nação facção com a nação do lider
+INSERT INTO FACCAO values('Fremen', '551.398.886-11', 'TOTALITARIA', 0);
+
+-- Funciona pois o novo lider é da mesma faccao que o anterior
+UPDATE FACCAO SET lider = '452.986.325-11' WHERE nome = 'Fremen';
+
+-- Falha, pois o novo lider é de uma nação a qual não faz parte da facção
+UPDATE FACCAO SET lider = '456.666.333-12' WHERE nome = 'Fremen';
 
 -- c) A quantidade de nações, na tabela Faccao dever estar sempre atualizada.  
 CREATE OR REPLACE TRIGGER atualizaFacNacoes

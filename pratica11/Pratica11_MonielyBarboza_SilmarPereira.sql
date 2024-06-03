@@ -133,11 +133,13 @@ Crie uma tabela para armazenar os dados de log: usuario que realizou a operacao,
 data/hora.
 */
 
+set serveroutput on;
+
 --Criacao da tabela de logs
-/* OBS: Considerando que é possível que um mesmo usuário execute 2 oprações iguais
+/* OBS: Considerando que eh possivel que um mesmo usuario execute 2 operacoes iguais
 no mesmo momento (como 2 inserts/updates/delestes, em sequencia), utilizar apenas os atributos 
-da tabela como chave primária estava causando erros de duplicacao de chave.
-Por esse motivo, soi criado um id sintetico para o log)
+da tabela como chave primaria estava causando erros de duplicacao de chave.
+Por esse motivo, foi criado um id sintetico para o log)
 */
 
 DROP TABLE LogTabelaEstrela;
@@ -227,9 +229,9 @@ CREATE OR REPLACE TRIGGER LogEstrela
         COMMIT;
 END LogEstrela;
 
-/* Para este exercício, alteramos o trigger para que ele seja uma transacao autonoma.
-Alem disso, a estrela 'ESTRELA_TESTE1' já foi inserida no item anterior.
-Sendo assim, ao fim do bloco PL/SQL abaixo, se não tivessemos o ROLLBACK,
+/* Para este exercicio, alteramos o trigger para que ele seja uma transacao autonoma.
+Alem disso, a estrela 'ESTRELA_TESTE1' ja foi inserida no item anterior.
+Sendo assim, ao fim do bloco PL/SQL abaixo, se nao tivessemos o ROLLBACK,
 essa estrela deveria ter sido deletada. Contudo, testaremos este cenario.
 */
 
@@ -239,13 +241,33 @@ BEGIN
 END;
 
 /* Como temos o ROLLBACK ao fim do bloco, a estrela permanece na tabela Estrela.
-Entretanto, a operacao de delete foi registrada na tabela de logs, já que e o 
-registro do log é uma transacao autonoma. */
+Entretanto, a operacao de delete foi registrada na tabela de logs, ja que e o 
+registro do log eh uma transacao autonoma. */
 
 
 /* 3) Defina uma transacao que devera ser implementada no projeto final (OBS: Nao e necessario
-implementar a transacao para esta pratica):
-a. Quais operacoes estao incluidas na transacao (incluindo operacoes em triggers)?
+implementar a transacao para esta pratica):   
+    Uma das funcionalidades do sistema relacionadas ao Lider de Faccao consiste em:
+    1. Lider de faccao:
+        a. Gerenciar aspectos da propria faccao da qual e lider:
+            i. Alterar nome da faccao
+    Entretanto, e importante observar que o nome da faccao e um atributo que esta
+    presente como chave estrangeira em outras tabelas que sao utilizadas em diversas
+    funcionalidades do sistema.
+    Sendo assim, ao alterar o nome da faccao, a tabela deve estar bloqueada ate a conclusao da transacao.
+    Por isso, sera definida uma transacao para essa funcionalidade.
+*/
+
+/* a. Quais operacoes estao incluidas na transacao (incluindo operacoes em triggers)?
 Justifique.
-b. Qual o nivel de isolamento da transcao? Justifique.
-c. Sera necessario utilizar savepoints e/ou transacoes autonomas? Justifique. */
+    Nessa transacao, esta inclusa a operacao de Update na tabela Faccao. 
+*/
+
+/* b. Qual o nivel de isolamento da transcao? Justifique.
+    Seu nivel de isolamento sera Serializable, permitindo que a transacao mantenha
+    bloqueio de todos os objetos que precisa ler e/ou escrever ate terminar.
+*/
+
+/* c. Sera necessario utilizar savepoints e/ou transacoes autonomas? Justifique. 
+    Nao serao necessarios savepoints nem transacoes autonomas.
+*/

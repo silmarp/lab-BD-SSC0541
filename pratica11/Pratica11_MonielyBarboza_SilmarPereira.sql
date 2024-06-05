@@ -19,23 +19,6 @@ cada caso. Os mesmos passos devem ser executados para os dois tipos de isolament
 -- USER2: a12623950
 
 -- Concedendo permissoes
-
--- TODO: Testar esse script depois
-SET PAGESIZE 0
-SET LINESIZE 100
-SET FEEDBACK OFF
-SPOOL grant_permissions.sql
-
-SELECT 'GRANT SELECT ON ' || table_name || ' TO a12623950;'
-FROM all_tables
-WHERE owner = 'a12563800';
-
-SPOOL OFF
-
-@grant_permissions.sql
-
--- TODO: Se der certo o script, apagar esses debaixo
-
 GRANT SELECT ON PARTICIPA TO a12623950;
 GRANT SELECT ON NACAO_FACCAO TO a12623950;
 GRANT SELECT ON FACCAO TO a12623950;
@@ -276,6 +259,9 @@ CREATE OR REPLACE TRIGGER LogEstrela
         v_id_log := TO_CHAR(log_seq.NEXTVAL, 'FM0000000000');
         INSERT INTO logTabelaEstrela
             VALUES (v_id_log, USER, v_operacao, SYSDATE);
+    EXCEPTION
+        WHEN OTHERS THEN
+            RAISE_APPLICATION_ERROR(-20001, 'Erro no registro de log');
 END LogEstrela;
 
 /* b) Os triggers sao executados dentro da mesma transacao em que e executada a operacao
@@ -299,6 +285,10 @@ BEGIN
     INSERT INTO ESTRELA VALUES('ESTRELA_TESTE2', 'Estrela principal', 'Gigante branca', 10.5, 1, 2, 3);
     UPDATE ESTRELA E SET E.NOME = 'Estrela Terciaria' WHERE E.ID_ESTRELA = 'ESTRELA_TESTE2';
     ROLLBACK;
+    
+    EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('Ocorreu um erro: ' || CHR(10) || SQLERRM);
 END;
 
 /* Executando o bloco PL/SQL acima, temos 6 instrucoes de disparo:
@@ -329,6 +319,9 @@ CREATE OR REPLACE TRIGGER LogEstrela
         INSERT INTO logTabelaEstrela
             VALUES (v_id_log, USER, v_operacao, SYSDATE);
         COMMIT;
+    EXCEPTION
+        WHEN OTHERS THEN
+            RAISE_APPLICATION_ERROR(-20001, 'Erro no registro de log');
 END LogEstrela;
 
 /* Para este exercicio, alteramos o trigger para que ele seja uma transacao autonoma.
@@ -340,6 +333,10 @@ essa estrela deveria ter sido deletada. Contudo, testaremos este cenario.
 BEGIN
     DELETE FROM ESTRELA E WHERE E.ID_ESTRELA = 'ESTRELA_TESTE1';    
     ROLLBACK;
+    
+    EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('Ocorreu um erro: ' || CHR(10) || SQLERRM);
 END;
 
 /* Como temos o ROLLBACK ao fim do bloco, a estrela permanece na tabela Estrela.
@@ -371,5 +368,7 @@ Justifique.
 */
 
 /* c. Sera necessario utilizar savepoints e/ou transacoes autonomas? Justifique. 
-    Nao serao necessarios savepoints nem transacoes autonomas.
+    Nao serao necessarios savepoints nem transacoes autonomas, ja que a transacao so deve ser concluida
+    quando sua operacao de disparo for efetivada, seguindo o comportamento da transacao pai.
+    Alem de nao haver uma sequencia de operacoes a serem executadas, nao demandando savepoints.
 */

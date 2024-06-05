@@ -61,11 +61,37 @@ GRANT SELECT ON PLANETA TO a12623950;
 /* iii. Na SESSAO 2, inicie uma transacao com um dos niveis de isolamento (OBS: inicie a transacao
 executando o comando SET TRANSACTION); */
 
+-- Read Commited
+SET TRANSACTION ISOLATION LEVEL READ COMMITTED; 
+
+-- Serializabla 
+SET TRANSACTION ISOLATION LEVEL SERIALIZABLE; 
 
 /* iv. Na SESSAO 2, faca uma consulta que envolva juncao e/ou agrupamento (em SQL) (OBS:
 cuidado para nao executar novamente o comando SET TRANSACTION ? execute apenas o
 comando de consulta); */
 
+-- Read commited
+SELECT e.ID_ESTRELA, op.PLANETA  FROM a12563800.ESTRELA e JOIN a12563800.ORBITA_PLANETA op 
+	ON e.ID_ESTRELA = op.ESTRELA;
+
+/* Resultado
+GA1	Gallifrey
+GA1	Skaro
+SK20	Skaro
+*/
+
+-- Serializable
+SELECT e.ID_ESTRELA, op.PLANETA  FROM a12563800.ESTRELA e JOIN a12563800.ORBITA_PLANETA op 
+	ON e.ID_ESTRELA = op.ESTRELA;
+
+
+/* Resultado
+GA1	Gallifrey
+ESTRELA_TESTE1	PLANETA_TESTE1
+GA1	Skaro
+SK20	Skaro
+*/
 
 /* v. Na SESSAO 1, execute um comando DML que afete a resposta da consulta executada no item
 anterior (OBS: nao e necessario iniciar explicitamente uma transacao ? considere a transacao
@@ -111,20 +137,96 @@ Observa-se que, o novo dado que acabou de ser inserido aparece no resultado da c
 */
 
 /* vi. Na SESSAO 2, execute novamente a mesma consulta. O que aconteceu e por que? */
+-- Read Commited
+SELECT e.ID_ESTRELA, op.PLANETA  FROM a12563800.ESTRELA e JOIN a12563800.ORBITA_PLANETA op 
+	ON e.ID_ESTRELA = op.ESTRELA;
 
+/* Resultado
+GA1	Gallifrey
+GA1	Skaro
+SK20	Skaro
+
+O resultado da consulta manteve-se o mesmo pois ainda não houve commit por parte da sessão 1
+*/
+
+-- Serializable
+SELECT e.ID_ESTRELA, op.PLANETA  FROM a12563800.ESTRELA e JOIN a12563800.ORBITA_PLANETA op 
+	ON e.ID_ESTRELA = op.ESTRELA;
+
+/* Resultado
+GA1	Gallifrey
+ESTRELA_TESTE1	PLANETA_TESTE1
+GA1	Skaro
+SK20	Skaro
+
+O resultado da consulta manteve-se o mesmo pois ainda não houve commit por parte da sessão 1
+*/
 
 /* vii. Na SESSAO 1, execute COMMIT para efetivar a transacao; */
 COMMIT;
 
 /* viii. Na SESSAO 2, execute novamente a mesma consulta. O que aconteceu e por que? */
+-- Read Commited
+SELECT e.ID_ESTRELA, op.PLANETA  FROM a12563800.ESTRELA e JOIN a12563800.ORBITA_PLANETA op 
+	ON e.ID_ESTRELA = op.ESTRELA;
 
+
+/* Resultado
+GA1	Gallifrey
+ESTRELA_TESTE1	PLANETA_TESTE1
+GA1	Skaro
+SK20	Skaro
+
+Após a efetivação realizada no item anterior, agora sim é possivel observar o novo dado que foi inserido.
+*/
+
+-- Serializable
+SELECT e.ID_ESTRELA, op.PLANETA  FROM a12563800.ESTRELA e JOIN a12563800.ORBITA_PLANETA op 
+	ON e.ID_ESTRELA = op.ESTRELA;
+
+/* Resultado
+GA1	Gallifrey
+ESTRELA_TESTE1	PLANETA_TESTE1
+GA1	Skaro
+SK20	Skaro
+
+Manteve-se o mesmo resultado pois quando ao ultilizar serializable quando uma transação
+faz uma consulta, e lê o resultado, esse resultado se mantem o mesmo até que a transação seja finalizada
+*/
 
 /* ix. Na SESSAO 2, execute COMMIT para efetivar a transacao; */
-
+-- Read Commited e serializable
+COMMIT;
 
 /* x. Na SESSAO 2, execute novamente a mesma consulta. O que aconteceu e por que? */
+-- Read commited
+SELECT e.ID_ESTRELA, op.PLANETA  FROM a12563800.ESTRELA e JOIN a12563800.ORBITA_PLANETA op 
+	ON e.ID_ESTRELA = op.ESTRELA;
 
+/*
+GA1	Gallifrey
+ESTRELA_TESTE1	PLANETA_TESTE1
+GA1	Skaro
+SK20	Skaro 
 
+Manteve-se o mesmo resultado do item viii, isso decorre da opção read commited permitir a anomalia
+de phantom read
+*/
+
+-- Serializable
+SELECT e.ID_ESTRELA, op.PLANETA  FROM a12563800.ESTRELA e JOIN a12563800.ORBITA_PLANETA op 
+	ON e.ID_ESTRELA = op.ESTRELA;
+
+/*
+GA1	Gallifrey
+ESTRELA_TESTE1	PLANETA_TESTE1
+ESTRELA_TESTE2	PLANETA_TESTE2
+GA1	Skaro
+SK20	Skaro
+
+Agora sim podemos observar que houve mudança no resultado, isso decorre do fato de a transação anterior
+em modo serializable ter finalizado.
+*/
 
 
 /* 2)
